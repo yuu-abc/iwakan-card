@@ -14,6 +14,7 @@
       --accent: #7c5f45;
       --accent-dark: #5f4630;
       --danger: #b65454;
+      --favorite: #d69a2d;
       --soft: #eee7dc;
       --tag: #f1eadf;
       --shadow: 0 12px 30px rgba(40, 32, 24, 0.08);
@@ -171,6 +172,12 @@
       background: #e4d8c8;
     }
 
+    button.secondary.active {
+      background: var(--accent-dark);
+      color: #fff;
+      border-color: var(--accent-dark);
+    }
+
     button.danger {
       background: var(--danger);
     }
@@ -256,6 +263,18 @@
       line-height: 1.4;
     }
 
+    .card-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .favorite-mark {
+      color: var(--favorite);
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
     .date {
       color: var(--muted);
       font-size: 12px;
@@ -288,6 +307,34 @@
     .tag {
       background: var(--tag);
       color: #5b5147;
+    }
+
+    .card-actions {
+      align-items: stretch;
+    }
+
+    .icon-button {
+      min-width: 42px;
+      padding-inline: 12px;
+    }
+
+    .favorite-button.active {
+      background: #fff5dc;
+      border-color: #e7c778;
+      color: #79530a;
+    }
+
+    .favorite-button.active:hover {
+      background: #f5e4b7;
+    }
+
+    .card-body {
+      display: grid;
+      gap: 10px;
+    }
+
+    .card.collapsed .card-body {
+      display: none;
     }
 
     .field {
@@ -445,6 +492,7 @@
         </div>
 
         <div class="toolbar-right">
+          <button id="favoriteFilterBtn" class="secondary" type="button" aria-pressed="false">お気に入りのみ</button>
           <button id="exportBtn" class="secondary">JSONエクスポート</button>
           <label class="file-label secondary" for="importInput">JSONインポート</label>
           <input id="importInput" type="file" accept="application/json,.json" />
@@ -483,7 +531,9 @@
       hiddenAssumption: "",
       realIssue: "",
       boundary: "",
-      nextWatch: ""
+      nextWatch: "",
+      isFavorite: false,
+      isCollapsed: false
     };
 
     const sampleCard = {
@@ -498,6 +548,8 @@
       realIssue: "問題は変更そのものではなく、運用まで設計されているかである。",
       boundary: "私は小さな手順変更までは許容できるが、責任の所在が曖昧なまま進むなら危ないと見る。",
       nextWatch: "変更後に誰の作業が増えるのかを見る。",
+      isFavorite: false,
+      isCollapsed: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -543,6 +595,7 @@ JSON形式:
     const tagFilter = document.getElementById("tagFilter");
     const cardsEl = document.getElementById("cards");
     const emptyEl = document.getElementById("empty");
+    const favoriteFilterBtn = document.getElementById("favoriteFilterBtn");
     const exportBtn = document.getElementById("exportBtn");
     const importInput = document.getElementById("importInput");
     const deleteAllBtn = document.getElementById("deleteAllBtn");
@@ -554,6 +607,7 @@ JSON形式:
 
     let cards = [];
     let editingId = null;
+    let showFavoritesOnly = false;
 
     function init() {
       promptBox.textContent = chatGptPrompt;
@@ -603,6 +657,8 @@ JSON形式:
         realIssue: String(source.realIssue || source["本当の論点"] || ""),
         boundary: String(source.boundary || source["線引き"] || ""),
         nextWatch: String(source.nextWatch || source["次に見るもの"] || source["次の行動"] || ""),
+        isFavorite: Boolean(source.isFavorite || source.favorite || source["お気に入り"]),
+        isCollapsed: Boolean(source.isCollapsed || source.collapsed || source["折りたたみ"]),
         createdAt: source.createdAt || now,
         updatedAt: now
       };
@@ -677,6 +733,8 @@ JSON形式:
       const keyword = searchInput.value.trim().toLowerCase();
       const category = categoryFilter.value;
       const tag = tagFilter.value;
+      favoriteFilterBtn.classList.toggle("active", showFavoritesOnly);
+      favoriteFilterBtn.setAttribute("aria-pressed", String(showFavoritesOnly));
 
       const filtered = cards.filter(card => {
         const text = [
@@ -689,13 +747,15 @@ JSON形式:
           card.hiddenAssumption,
           card.realIssue,
           card.boundary,
-          card.nextWatch
+          card.nextWatch,
+          card.isFavorite ? "お気に入り favorite" : ""
         ].join(" ").toLowerCase();
 
         const matchKeyword = !keyword || text.includes(keyword);
         const matchCategory = !category || card.category === category;
         const matchTag = !tag || (card.tags || []).includes(tag);
-        return matchKeyword && matchCategory && matchTag;
+        const matchFavorite = !showFavoritesOnly || card.isFavorite;
+        return matchKeyword && matchCategory && matchTag && matchFavorite;
       });
 
       cardsEl.innerHTML = "";
@@ -741,14 +801,17 @@ JSON形式:
 
     function createCardElement(card) {
       const article = document.createElement("article");
-      article.className = "card";
+      article.className = `card${card.isCollapsed ? " collapsed" : ""}`;
 
       const tagsHtml = (card.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join("");
 
       article.innerHTML = `
         <div class="card-head">
           <div>
-            <h3 class="card-title">${escapeHtml(card.title)}</h3>
+            <div class="card-title-row">
+              ${card.isFavorite ? `<span class="favorite-mark" aria-label="お気に入り">★</span>` : ""}
+              <h3 class="card-title">${escapeHtml(card.title)}</h3>
+            </div>
             <div class="meta">
               ${card.category ? `<span class="category">${escapeHtml(card.category)}</span>` : ""}
               ${tagsHtml}
@@ -757,14 +820,18 @@ JSON形式:
           <span class="date">${formatDate(card.createdAt)}</span>
         </div>
 
-        ${fieldHtml("違和感", card.iwakan)}
-        ${fieldHtml("表向きの説明", card.surfaceExplanation)}
-        ${fieldHtml("隠れた前提", card.hiddenAssumption)}
-        ${fieldHtml("本当の論点", card.realIssue)}
-        ${fieldHtml("線引き", card.boundary)}
-        ${fieldHtml("次に見るもの", card.nextWatch)}
+        <div class="card-body" id="card-body-${escapeAttribute(card.id)}">
+          ${fieldHtml("違和感", card.iwakan)}
+          ${fieldHtml("表向きの説明", card.surfaceExplanation)}
+          ${fieldHtml("隠れた前提", card.hiddenAssumption)}
+          ${fieldHtml("本当の論点", card.realIssue)}
+          ${fieldHtml("線引き", card.boundary)}
+          ${fieldHtml("次に見るもの", card.nextWatch)}
+        </div>
 
-        <div class="row">
+        <div class="row card-actions">
+          <button class="ghost icon-button favorite-button${card.isFavorite ? " active" : ""}" data-action="favorite" data-id="${escapeAttribute(card.id)}" aria-pressed="${card.isFavorite}">${card.isFavorite ? "★ お気に入り" : "☆ お気に入り"}</button>
+          <button class="secondary" data-action="toggle-collapse" data-id="${escapeAttribute(card.id)}" aria-expanded="${!card.isCollapsed}" aria-controls="card-body-${escapeAttribute(card.id)}">${card.isCollapsed ? "展開" : "折りたたみ"}</button>
           <button class="secondary" data-action="edit" data-id="${escapeAttribute(card.id)}">編集</button>
           <button class="ghost" data-action="copy" data-id="${escapeAttribute(card.id)}">JSONコピー</button>
           <button class="danger" data-action="delete" data-id="${escapeAttribute(card.id)}">削除</button>
@@ -778,6 +845,8 @@ JSON形式:
         const action = button.dataset.action;
         const id = button.dataset.id;
 
+        if (action === "favorite") toggleFavorite(id);
+        if (action === "toggle-collapse") toggleCollapse(id);
         if (action === "edit") openEdit(id);
         if (action === "copy") copyCardJson(id);
         if (action === "delete") deleteCard(id);
@@ -816,6 +885,40 @@ JSON形式:
       return escapeHtml(value).replaceAll("`", "&#096;");
     }
 
+
+    function updateCardState(id, changes, message) {
+      cards = cards.map(card => {
+        if (card.id !== id) return card;
+        return {
+          ...card,
+          ...changes,
+          updatedAt: new Date().toISOString()
+        };
+      });
+      saveCards();
+      render();
+      if (message) setStatus(message, "ok");
+    }
+
+    function toggleFavorite(id) {
+      const card = cards.find(item => item.id === id);
+      if (!card) return;
+      updateCardState(
+        id,
+        { isFavorite: !card.isFavorite },
+        !card.isFavorite ? "お気に入りに追加しました。" : "お気に入りを解除しました。"
+      );
+    }
+
+    function toggleCollapse(id) {
+      const card = cards.find(item => item.id === id);
+      if (!card) return;
+      updateCardState(
+        id,
+        { isCollapsed: !card.isCollapsed },
+        !card.isCollapsed ? "カードを折りたたみました。" : "カードを展開しました。"
+      );
+    }
 
     function saveInputCards() {
       try {
@@ -938,6 +1041,10 @@ JSON形式:
     searchInput.addEventListener("input", render);
     categoryFilter.addEventListener("change", render);
     tagFilter.addEventListener("change", render);
+    favoriteFilterBtn.addEventListener("click", () => {
+      showFavoritesOnly = !showFavoritesOnly;
+      render();
+    });
     exportBtn.addEventListener("click", exportCards);
     importInput.addEventListener("change", event => {
       importCards(event.target.files[0]);
