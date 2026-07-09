@@ -1334,11 +1334,27 @@ JSON形式:
     function toggleDetails(id) {
       const card = cards.find(item => item.id === id);
       if (!card) return;
-      updateCardState(
-        id,
-        { isDetailsOpen: !card.isDetailsOpen },
-        !card.isDetailsOpen ? "詳しい項目を表示しました。" : "詳しい項目を閉じました。"
-      );
+
+      const isOpen = !card.isDetailsOpen;
+      card.isDetailsOpen = isOpen;
+      saveCards();
+
+      const details = document.getElementById(`card-details-${id}`);
+      const button = cardsEl.querySelector(`[data-action="toggle-details"][data-id="${cssEscape(id)}"]`);
+
+      if (details) details.classList.toggle("hidden", !isOpen);
+      if (button) {
+        button.setAttribute("aria-expanded", String(isOpen));
+        button.textContent = isOpen ? "閉じる" : "詳しく見る";
+      }
+
+      setStatus(isOpen ? "詳しい項目を表示しました。" : "詳しい項目を閉じました。", "ok");
+      updateCarouselPosition();
+    }
+
+    function cssEscape(value) {
+      if (globalThis.CSS?.escape) return globalThis.CSS.escape(value);
+      return String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"');
     }
 
     function saveInputCards() {
