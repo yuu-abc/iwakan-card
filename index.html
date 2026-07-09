@@ -308,20 +308,6 @@
       white-space: pre-wrap;
     }
 
-    .card img {
-      width: 100%;
-      max-height: 260px;
-      object-fit: cover;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: var(--soft);
-    }
-
-    .image-caption {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: -4px;
-    }
 
     .empty {
       text-align: center;
@@ -419,21 +405,16 @@
         <h2>JSONを入力</h2>
         <p class="hint">
           ChatGPTで整えたJSONを貼り付けて「カードとして保存」を押してください。
-          画像はURL、または下の画像選択から追加できます。
+          ```json のコードブロック付きでも取り込めます。
         </p>
 
         <textarea id="jsonInput" spellcheck="false" aria-label="違和感カードJSON入力欄"></textarea>
 
         <div class="row" style="margin-top: 12px;">
-          <label class="file-label secondary" for="imageInput">画像を選択</label>
-          <input id="imageInput" type="file" accept="image/*" />
           <button id="saveBtn">カードとして保存</button>
           <button id="clearBtn" class="secondary">入力欄をクリア</button>
         </div>
 
-        <p class="small">
-          ※画像をdataUrlで保存するとブラウザ保存領域を使います。大きい画像をたくさん入れると重くなる場合があります。
-        </p>
         <div id="status" class="status"></div>
       </div>
 
@@ -502,15 +483,7 @@
       hiddenAssumption: "",
       realIssue: "",
       boundary: "",
-      nextWatch: "",
-      image: {
-        type: "none",
-        url: "",
-        dataUrl: "",
-        fileName: "",
-        caption: "",
-        alt: ""
-      }
+      nextWatch: ""
     };
 
     const sampleCard = {
@@ -525,14 +498,6 @@
       realIssue: "問題は変更そのものではなく、運用まで設計されているかである。",
       boundary: "私は小さな手順変更までは許容できるが、責任の所在が曖昧なまま進むなら危ないと見る。",
       nextWatch: "変更後に誰の作業が増えるのかを見る。",
-      image: {
-        type: "none",
-        url: "",
-        dataUrl: "",
-        fileName: "",
-        caption: "",
-        alt: ""
-      },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -548,7 +513,6 @@
 - category は「仕事 / 人間関係 / 投資 / 社会分析 / 物語 / 自分の価値観」などから近いものを入れてください
 - 分からない項目は空文字にしてください
 - 推測しすぎないでください
-- 画像の説明がある場合だけ image.caption と image.alt に入れてください
 
 JSON形式:
 {
@@ -561,22 +525,13 @@ JSON形式:
   "hiddenAssumption": "",
   "realIssue": "",
   "boundary": "",
-  "nextWatch": "",
-  "image": {
-    "type": "none",
-    "url": "",
-    "dataUrl": "",
-    "fileName": "",
-    "caption": "",
-    "alt": ""
-  }
+  "nextWatch": ""
 }
 
 メモ:
 ここにメモを貼る`;
 
     const jsonInput = document.getElementById("jsonInput");
-    const imageInput = document.getElementById("imageInput");
     const saveBtn = document.getElementById("saveBtn");
     const clearBtn = document.getElementById("clearBtn");
     const statusEl = document.getElementById("status");
@@ -612,7 +567,13 @@ JSON形式:
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return [sampleCard];
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map(item => {
+          const card = normalizeCard(item, item?.id);
+          card.createdAt = item?.createdAt || card.createdAt;
+          card.updatedAt = item?.updatedAt || card.updatedAt;
+          return card;
+        });
       } catch (error) {
         console.error(error);
         return [];
@@ -626,44 +587,79 @@ JSON形式:
 
     function normalizeCard(input, existingId = null) {
       const now = new Date().toISOString();
+      const source = input && typeof input === "object" ? input : {};
 
       return {
-        id: existingId || input.id || crypto.randomUUID(),
-        title: String(input.title || "無題の違和感"),
-        memo: String(input.memo || ""),
-        category: String(input.category || ""),
-        tags: Array.isArray(input.tags)
-          ? input.tags.map(tag => String(tag)).filter(Boolean)
-          : String(input.tags || "").split(",").map(tag => tag.trim()).filter(Boolean),
-        iwakan: String(input.iwakan || input["違和感"] || ""),
-        surfaceExplanation: String(input.surfaceExplanation || input["表向きの説明"] || ""),
-        hiddenAssumption: String(input.hiddenAssumption || input["隠れた前提"] || ""),
-        realIssue: String(input.realIssue || input["本当の論点"] || ""),
-        boundary: String(input.boundary || input["線引き"] || ""),
-        nextWatch: String(input.nextWatch || input["次に見るもの"] || input["次の行動"] || ""),
-        image: {
-          type: input.image?.type || "none",
-          url: input.image?.url || "",
-          dataUrl: input.image?.dataUrl || "",
-          fileName: input.image?.fileName || "",
-          caption: input.image?.caption || "",
-          alt: input.image?.alt || input.title || "違和感カードの画像"
-        },
-        createdAt: input.createdAt || now,
+        id: existingId || source.id || createId(),
+        title: String(source.title || "無題の違和感"),
+        memo: String(source.memo || ""),
+        category: String(source.category || ""),
+        tags: Array.isArray(source.tags)
+          ? source.tags.map(tag => String(tag)).filter(Boolean)
+          : String(source.tags || "").split(",").map(tag => tag.trim()).filter(Boolean),
+        iwakan: String(source.iwakan || source["違和感"] || ""),
+        surfaceExplanation: String(source.surfaceExplanation || source["表向きの説明"] || ""),
+        hiddenAssumption: String(source.hiddenAssumption || source["隠れた前提"] || ""),
+        realIssue: String(source.realIssue || source["本当の論点"] || ""),
+        boundary: String(source.boundary || source["線引き"] || ""),
+        nextWatch: String(source.nextWatch || source["次に見るもの"] || source["次の行動"] || ""),
+        createdAt: source.createdAt || now,
         updatedAt: now
       };
     }
 
     function parseJson(text) {
       try {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) {
-          return parsed.map(item => normalizeCard(item));
-        }
-        return [normalizeCard(parsed)];
+        return parseCardText(text).map(item => normalizeCard(item));
       } catch (error) {
+        throw new Error(error.message || "JSONの形式が正しくありません。カンマ、引用符、閉じカッコを確認してください。");
+      }
+    }
+
+    function parseCardText(text) {
+      const cleaned = cleanJsonText(text);
+      let parsed;
+
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
         throw new Error("JSONの形式が正しくありません。カンマ、引用符、閉じカッコを確認してください。");
       }
+
+      return extractCardItems(parsed);
+    }
+
+    function cleanJsonText(text) {
+      const trimmed = String(text || "").trim();
+      if (!trimmed) throw new Error("JSONが空です。カード用JSONを貼り付けてください。");
+
+      const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+      const candidate = fenced ? fenced[1].trim() : trimmed;
+      const firstObject = candidate.indexOf("{");
+      const firstArray = candidate.indexOf("[");
+      const starts = [firstObject, firstArray].filter(index => index >= 0);
+      if (starts.length === 0) throw new Error("JSONの開始位置が見つかりません。{ または [ から始まる内容を貼り付けてください。");
+
+      const start = Math.min(...starts);
+      const open = candidate[start];
+      const close = open === "{" ? "}" : "]";
+      const end = candidate.lastIndexOf(close);
+      if (end < start) throw new Error("JSONの閉じカッコが見つかりません。");
+
+      return candidate.slice(start, end + 1);
+    }
+
+    function extractCardItems(parsed) {
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && Array.isArray(parsed.cards)) return parsed.cards;
+      if (parsed && Array.isArray(parsed.items)) return parsed.items;
+      if (parsed && typeof parsed === "object") return [parsed];
+      throw new Error("カードとして読み込めるJSONオブジェクトがありません。");
+    }
+
+    function createId() {
+      if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+      return `card-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     }
 
     function setStatus(message, type = "") {
@@ -747,7 +743,6 @@ JSON形式:
       const article = document.createElement("article");
       article.className = "card";
 
-      const imageSrc = card.image?.dataUrl || card.image?.url || "";
       const tagsHtml = (card.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join("");
 
       article.innerHTML = `
@@ -761,13 +756,6 @@ JSON形式:
           </div>
           <span class="date">${formatDate(card.createdAt)}</span>
         </div>
-
-        ${imageSrc ? `
-          <div>
-            <img src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(card.image?.alt || card.title)}" />
-            ${card.image?.caption ? `<div class="image-caption">${escapeHtml(card.image.caption)}</div>` : ""}
-          </div>
-        ` : ""}
 
         ${fieldHtml("違和感", card.iwakan)}
         ${fieldHtml("表向きの説明", card.surfaceExplanation)}
@@ -828,44 +816,6 @@ JSON形式:
       return escapeHtml(value).replaceAll("`", "&#096;");
     }
 
-    async function handleImage(file) {
-      if (!file) return;
-
-      if (file.size > 900 * 1024) {
-        setStatus("画像が大きめです。保存はできますが、表示や保存が重くなる場合があります。", "error");
-      }
-
-      const dataUrl = await fileToDataUrl(file);
-      let base = {};
-
-      try {
-        base = JSON.parse(jsonInput.value || "{}");
-      } catch {
-        base = { ...emptyTemplate };
-      }
-
-      base.image = {
-        ...(base.image || {}),
-        type: "dataUrl",
-        dataUrl,
-        url: "",
-        fileName: file.name,
-        caption: base.image?.caption || "",
-        alt: base.image?.alt || base.title || "違和感カードの画像"
-      };
-
-      jsonInput.value = JSON.stringify(base, null, 2);
-      setStatus("画像をJSONに入れました。必要ならcaptionやaltも編集できます。", "ok");
-    }
-
-    function fileToDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error("画像の読み込みに失敗しました。"));
-        reader.readAsDataURL(file);
-      });
-    }
 
     function saveInputCards() {
       try {
@@ -892,7 +842,7 @@ JSON形式:
 
     function updateEditingCard() {
       try {
-        const parsed = JSON.parse(editInput.value);
+        const parsed = parseCardText(editInput.value)[0];
         const existing = cards.find(card => card.id === editingId);
         const updated = normalizeCard({
           ...parsed,
@@ -947,16 +897,14 @@ JSON形式:
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const parsed = JSON.parse(reader.result);
-          const items = Array.isArray(parsed) ? parsed : [parsed];
-          const imported = items.map(item => normalizeCard(item));
+          const imported = parseCardText(reader.result).map(item => normalizeCard(item));
           cards = cards.filter(card => card.id !== "sample-001");
           cards = [...imported, ...cards];
           saveCards();
           render();
           setStatus(`${imported.length}件をインポートしました。`, "ok");
         } catch (error) {
-          setStatus("インポートできませんでした。JSONファイルの形式を確認してください。", "error");
+          setStatus(`インポートできませんでした。${error.message}`, "error");
         }
       };
       reader.readAsText(file);
@@ -976,10 +924,6 @@ JSON形式:
       setStatus("入力欄をクリアしました。", "ok");
     });
 
-    imageInput.addEventListener("change", event => {
-      handleImage(event.target.files[0]);
-      event.target.value = "";
-    });
 
     copyPromptBtn.addEventListener("click", async () => {
       await navigator.clipboard.writeText(chatGptPrompt);
