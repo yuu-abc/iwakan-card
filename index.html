@@ -132,7 +132,7 @@
 
     .controls {
       display: grid;
-      grid-template-columns: 1fr 170px;
+      grid-template-columns: minmax(220px, 1fr) 160px 160px 170px;
       gap: 10px;
     }
 
@@ -179,6 +179,11 @@
       background: transparent;
       color: var(--accent-dark);
       border: 1px solid var(--line);
+    }
+
+    button.active {
+      background: var(--accent-dark);
+      color: #fff;
     }
 
     .status {
@@ -290,6 +295,73 @@
       color: #5b5147;
     }
 
+    button.tag,
+    .tag-button {
+      border: 1px solid transparent;
+      cursor: pointer;
+      min-height: auto;
+      width: auto;
+      padding: 4px 9px;
+      font-weight: 600;
+    }
+
+    button.tag:hover,
+    .tag-button:hover,
+    .tag-button.active {
+      background: #dfd1bf;
+      color: var(--accent-dark);
+      transform: none;
+      border-color: #cfbca6;
+    }
+
+    .favorite-button {
+      min-width: 44px;
+      padding-inline: 12px;
+      background: var(--soft);
+      color: var(--accent-dark);
+      border: 1px solid var(--line);
+      font-size: 16px;
+    }
+
+    .favorite-button.active {
+      background: #f5df9a;
+      color: #6a4b00;
+      border-color: #e1c766;
+    }
+
+    .favorite-mark {
+      color: #b68400;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .list-tools,
+    .tag-cloud {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .result-count {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .card-summary {
+      color: var(--muted);
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
+    .card-details {
+      display: grid;
+      gap: 10px;
+    }
+
     .field {
       border-top: 1px solid var(--line);
       padding-top: 9px;
@@ -308,20 +380,6 @@
       white-space: pre-wrap;
     }
 
-    .card img {
-      width: 100%;
-      max-height: 260px;
-      object-fit: cover;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: var(--soft);
-    }
-
-    .image-caption {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: -4px;
-    }
 
     .empty {
       text-align: center;
@@ -397,6 +455,11 @@
         width: 100%;
       }
 
+      button.tag,
+      .favorite-button {
+        width: auto;
+      }
+
       .row > button,
       .row > .file-label {
         flex: 1 1 160px;
@@ -410,6 +473,7 @@
     <p class="subtitle">
       小さな引っかかりを、流さずに残すためのカード型メモです。
       JSONを貼り付けて保存すると、「違和感」「隠れた前提」「本当の論点」「線引き」をあとで見返せます。
+      ☆でお気に入り登録、タグクリックで絞り込み、カードの開閉で件数が増えても整理できます。
     </p>
   </header>
 
@@ -419,21 +483,16 @@
         <h2>JSONを入力</h2>
         <p class="hint">
           ChatGPTで整えたJSONを貼り付けて「カードとして保存」を押してください。
-          画像はURL、または下の画像選択から追加できます。
+          ```json のコードブロック付きでも取り込めます。
         </p>
 
         <textarea id="jsonInput" spellcheck="false" aria-label="違和感カードJSON入力欄"></textarea>
 
         <div class="row" style="margin-top: 12px;">
-          <label class="file-label secondary" for="imageInput">画像を選択</label>
-          <input id="imageInput" type="file" accept="image/*" />
           <button id="saveBtn">カードとして保存</button>
           <button id="clearBtn" class="secondary">入力欄をクリア</button>
         </div>
 
-        <p class="small">
-          ※画像をdataUrlで保存するとブラウザ保存領域を使います。大きい画像をたくさん入れると重くなる場合があります。
-        </p>
         <div id="status" class="status"></div>
       </div>
 
@@ -452,12 +511,29 @@
       <div class="toolbar">
         <div class="toolbar-left">
           <h2>保存したカード</h2>
+          <p class="hint">件数が増えたら「お気に入り」「タグ」「検索」を組み合わせて探せます。カードは「開く / 閉じる」で詳細を折りたためます。</p>
           <div class="controls">
             <input id="searchInput" type="search" placeholder="キーワード検索：タイトル・タグ・本文など" />
             <select id="categoryFilter">
               <option value="">すべてのカテゴリ</option>
             </select>
+            <select id="tagFilter">
+              <option value="">すべてのタグ</option>
+            </select>
+            <select id="sortSelect">
+              <option value="updatedDesc">更新日が新しい順</option>
+              <option value="createdDesc">作成日が新しい順</option>
+              <option value="favoriteFirst">お気に入りを上に</option>
+            </select>
           </div>
+          <div class="list-tools">
+            <button id="favoriteOnlyBtn" class="secondary" aria-pressed="false">☆ お気に入りだけ</button>
+            <button id="expandAllBtn" class="secondary">すべて開く</button>
+            <button id="collapseAllBtn" class="secondary">すべて閉じる</button>
+            <button id="clearTagBtn" class="ghost hidden">タグ絞り込みを解除</button>
+          </div>
+          <div id="tagCloud" class="tag-cloud" aria-label="タグ一覧"></div>
+          <div id="resultCount" class="result-count">0件中 0件を表示</div>
         </div>
 
         <div class="toolbar-right">
@@ -499,15 +575,7 @@
       hiddenAssumption: "",
       realIssue: "",
       boundary: "",
-      nextWatch: "",
-      image: {
-        type: "none",
-        url: "",
-        dataUrl: "",
-        fileName: "",
-        caption: "",
-        alt: ""
-      }
+      nextWatch: ""
     };
 
     const sampleCard = {
@@ -522,14 +590,8 @@
       realIssue: "問題は変更そのものではなく、運用まで設計されているかである。",
       boundary: "私は小さな手順変更までは許容できるが、責任の所在が曖昧なまま進むなら危ないと見る。",
       nextWatch: "変更後に誰の作業が増えるのかを見る。",
-      image: {
-        type: "none",
-        url: "",
-        dataUrl: "",
-        fileName: "",
-        caption: "",
-        alt: ""
-      },
+      isFavorite: false,
+      isCollapsed: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -545,7 +607,6 @@
 - category は「仕事 / 人間関係 / 投資 / 社会分析 / 物語 / 自分の価値観」などから近いものを入れてください
 - 分からない項目は空文字にしてください
 - 推測しすぎないでください
-- 画像の説明がある場合だけ image.caption と image.alt に入れてください
 
 JSON形式:
 {
@@ -558,22 +619,13 @@ JSON形式:
   "hiddenAssumption": "",
   "realIssue": "",
   "boundary": "",
-  "nextWatch": "",
-  "image": {
-    "type": "none",
-    "url": "",
-    "dataUrl": "",
-    "fileName": "",
-    "caption": "",
-    "alt": ""
-  }
+  "nextWatch": ""
 }
 
 メモ:
 ここにメモを貼る`;
 
     const jsonInput = document.getElementById("jsonInput");
-    const imageInput = document.getElementById("imageInput");
     const saveBtn = document.getElementById("saveBtn");
     const clearBtn = document.getElementById("clearBtn");
     const statusEl = document.getElementById("status");
@@ -582,6 +634,14 @@ JSON形式:
     const loadTemplateBtn = document.getElementById("loadTemplateBtn");
     const searchInput = document.getElementById("searchInput");
     const categoryFilter = document.getElementById("categoryFilter");
+    const tagFilter = document.getElementById("tagFilter");
+    const sortSelect = document.getElementById("sortSelect");
+    const favoriteOnlyBtn = document.getElementById("favoriteOnlyBtn");
+    const expandAllBtn = document.getElementById("expandAllBtn");
+    const collapseAllBtn = document.getElementById("collapseAllBtn");
+    const clearTagBtn = document.getElementById("clearTagBtn");
+    const tagCloud = document.getElementById("tagCloud");
+    const resultCount = document.getElementById("resultCount");
     const cardsEl = document.getElementById("cards");
     const emptyEl = document.getElementById("empty");
     const exportBtn = document.getElementById("exportBtn");
@@ -595,6 +655,7 @@ JSON形式:
 
     let cards = [];
     let editingId = null;
+    let showFavoritesOnly = false;
 
     function init() {
       promptBox.textContent = chatGptPrompt;
@@ -608,7 +669,13 @@ JSON形式:
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return [sampleCard];
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map(item => {
+          const card = normalizeCard(item, item?.id);
+          card.createdAt = item?.createdAt || card.createdAt;
+          card.updatedAt = item?.updatedAt || card.updatedAt;
+          return card;
+        });
       } catch (error) {
         console.error(error);
         return [];
@@ -622,44 +689,81 @@ JSON形式:
 
     function normalizeCard(input, existingId = null) {
       const now = new Date().toISOString();
+      const source = input && typeof input === "object" ? input : {};
 
       return {
-        id: existingId || input.id || crypto.randomUUID(),
-        title: String(input.title || "無題の違和感"),
-        memo: String(input.memo || ""),
-        category: String(input.category || ""),
-        tags: Array.isArray(input.tags)
-          ? input.tags.map(tag => String(tag)).filter(Boolean)
-          : String(input.tags || "").split(",").map(tag => tag.trim()).filter(Boolean),
-        iwakan: String(input.iwakan || input["違和感"] || ""),
-        surfaceExplanation: String(input.surfaceExplanation || input["表向きの説明"] || ""),
-        hiddenAssumption: String(input.hiddenAssumption || input["隠れた前提"] || ""),
-        realIssue: String(input.realIssue || input["本当の論点"] || ""),
-        boundary: String(input.boundary || input["線引き"] || ""),
-        nextWatch: String(input.nextWatch || input["次に見るもの"] || input["次の行動"] || ""),
-        image: {
-          type: input.image?.type || "none",
-          url: input.image?.url || "",
-          dataUrl: input.image?.dataUrl || "",
-          fileName: input.image?.fileName || "",
-          caption: input.image?.caption || "",
-          alt: input.image?.alt || input.title || "違和感カードの画像"
-        },
-        createdAt: input.createdAt || now,
-        updatedAt: now
+        id: existingId || source.id || createId(),
+        title: String(source.title || "無題の違和感"),
+        memo: String(source.memo || ""),
+        category: String(source.category || ""),
+        tags: Array.isArray(source.tags)
+          ? source.tags.map(tag => String(tag)).filter(Boolean)
+          : String(source.tags || "").split(",").map(tag => tag.trim()).filter(Boolean),
+        iwakan: String(source.iwakan || source["違和感"] || ""),
+        surfaceExplanation: String(source.surfaceExplanation || source["表向きの説明"] || ""),
+        hiddenAssumption: String(source.hiddenAssumption || source["隠れた前提"] || ""),
+        realIssue: String(source.realIssue || source["本当の論点"] || ""),
+        boundary: String(source.boundary || source["線引き"] || ""),
+        nextWatch: String(source.nextWatch || source["次に見るもの"] || source["次の行動"] || ""),
+        isFavorite: Boolean(source.isFavorite),
+        isCollapsed: Boolean(source.isCollapsed),
+        createdAt: source.createdAt || now,
+        updatedAt: source.updatedAt || now
       };
     }
 
     function parseJson(text) {
       try {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) {
-          return parsed.map(item => normalizeCard(item));
-        }
-        return [normalizeCard(parsed)];
+        return parseCardText(text).map(item => normalizeCard(item));
       } catch (error) {
+        throw new Error(error.message || "JSONの形式が正しくありません。カンマ、引用符、閉じカッコを確認してください。");
+      }
+    }
+
+    function parseCardText(text) {
+      const cleaned = cleanJsonText(text);
+      let parsed;
+
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
         throw new Error("JSONの形式が正しくありません。カンマ、引用符、閉じカッコを確認してください。");
       }
+
+      return extractCardItems(parsed);
+    }
+
+    function cleanJsonText(text) {
+      const trimmed = String(text || "").trim();
+      if (!trimmed) throw new Error("JSONが空です。カード用JSONを貼り付けてください。");
+
+      const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+      const candidate = fenced ? fenced[1].trim() : trimmed;
+      const firstObject = candidate.indexOf("{");
+      const firstArray = candidate.indexOf("[");
+      const starts = [firstObject, firstArray].filter(index => index >= 0);
+      if (starts.length === 0) throw new Error("JSONの開始位置が見つかりません。{ または [ から始まる内容を貼り付けてください。");
+
+      const start = Math.min(...starts);
+      const open = candidate[start];
+      const close = open === "{" ? "}" : "]";
+      const end = candidate.lastIndexOf(close);
+      if (end < start) throw new Error("JSONの閉じカッコが見つかりません。");
+
+      return candidate.slice(start, end + 1);
+    }
+
+    function extractCardItems(parsed) {
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && Array.isArray(parsed.cards)) return parsed.cards;
+      if (parsed && Array.isArray(parsed.items)) return parsed.items;
+      if (parsed && typeof parsed === "object") return [parsed];
+      throw new Error("カードとして読み込めるJSONオブジェクトがありません。");
+    }
+
+    function createId() {
+      if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+      return `card-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     }
 
     function setStatus(message, type = "") {
@@ -673,9 +777,10 @@ JSON形式:
     }
 
     function render() {
-      updateCategoryFilter();
+      updateFilters();
       const keyword = searchInput.value.trim().toLowerCase();
       const category = categoryFilter.value;
+      const tag = tagFilter.value;
 
       const filtered = cards.filter(card => {
         const text = [
@@ -693,10 +798,13 @@ JSON形式:
 
         const matchKeyword = !keyword || text.includes(keyword);
         const matchCategory = !category || card.category === category;
-        return matchKeyword && matchCategory;
+        const matchTag = !tag || (card.tags || []).includes(tag);
+        const matchFavorite = !showFavoritesOnly || card.isFavorite;
+        return matchKeyword && matchCategory && matchTag && matchFavorite;
       });
 
       cardsEl.innerHTML = "";
+      resultCount.textContent = `${cards.length}件中 ${filtered.length}件を表示`;
 
       if (filtered.length === 0) {
         emptyEl.classList.remove("hidden");
@@ -706,15 +814,31 @@ JSON形式:
       emptyEl.classList.add("hidden");
 
       filtered
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .sort(compareCards)
         .forEach(card => {
           cardsEl.appendChild(createCardElement(card));
         });
     }
 
-    function updateCategoryFilter() {
-      const current = categoryFilter.value;
+    function compareCards(a, b) {
+      if (sortSelect.value === "favoriteFirst") {
+        const favoriteDiff = Number(b.isFavorite) - Number(a.isFavorite);
+        if (favoriteDiff !== 0) return favoriteDiff;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+      }
+
+      if (sortSelect.value === "createdDesc") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return new Date(b.updatedAt) - new Date(a.updatedAt);
+    }
+
+    function updateFilters() {
+      const currentCategory = categoryFilter.value;
+      const currentTag = tagFilter.value;
       const categories = [...new Set(cards.map(card => card.category).filter(Boolean))].sort();
+      const tags = [...new Set(cards.flatMap(card => card.tags || []).filter(Boolean))].sort();
 
       categoryFilter.innerHTML = '<option value="">すべてのカテゴリ</option>';
       categories.forEach(category => {
@@ -723,44 +847,93 @@ JSON形式:
         option.textContent = category;
         categoryFilter.appendChild(option);
       });
+      categoryFilter.value = categories.includes(currentCategory) ? currentCategory : "";
 
-      categoryFilter.value = categories.includes(current) ? current : "";
+      tagFilter.innerHTML = '<option value="">すべてのタグ</option>';
+      tags.forEach(tag => {
+        const option = document.createElement("option");
+        option.value = tag;
+        option.textContent = `#${tag}`;
+        tagFilter.appendChild(option);
+      });
+      tagFilter.value = tags.includes(currentTag) ? currentTag : "";
+      renderTagCloud(tags);
+      clearTagBtn.classList.toggle("hidden", !tagFilter.value);
+      favoriteOnlyBtn.classList.toggle("active", showFavoritesOnly);
+      favoriteOnlyBtn.setAttribute("aria-pressed", String(showFavoritesOnly));
+    }
+
+    function renderTagCloud(tags) {
+      tagCloud.innerHTML = "";
+      if (tags.length === 0) {
+        const note = document.createElement("span");
+        note.className = "small";
+        note.textContent = "タグはまだありません。";
+        tagCloud.appendChild(note);
+        return;
+      }
+
+      const label = document.createElement("span");
+      label.className = "small";
+      label.textContent = "タグ一覧:";
+      tagCloud.appendChild(label);
+
+      tags.forEach(tag => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tag tag-button";
+        button.textContent = `#${tag}`;
+        button.dataset.tag = tag;
+        button.classList.toggle("active", tagFilter.value === tag);
+        button.addEventListener("click", () => applyTagFilter(tag));
+        tagCloud.appendChild(button);
+      });
+    }
+
+    function applyTagFilter(tag) {
+      tagFilter.value = tag;
+      render();
     }
 
     function createCardElement(card) {
       const article = document.createElement("article");
       article.className = "card";
 
-      const imageSrc = card.image?.dataUrl || card.image?.url || "";
-      const tagsHtml = (card.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join("");
+      const tagsHtml = (card.tags || [])
+        .map(tag => `<button class="tag" data-action="tag" data-tag="${escapeAttribute(tag)}">#${escapeHtml(tag)}</button>`)
+        .join("");
+      const summary = makeSummary(card.iwakan);
+      const isCollapsed = Boolean(card.isCollapsed);
 
       article.innerHTML = `
         <div class="card-head">
           <div>
             <h3 class="card-title">${escapeHtml(card.title)}</h3>
             <div class="meta">
+              ${card.isFavorite ? '<span class="favorite-mark" aria-label="お気に入り">★</span>' : ""}
               ${card.category ? `<span class="category">${escapeHtml(card.category)}</span>` : ""}
               ${tagsHtml}
             </div>
           </div>
-          <span class="date">${formatDate(card.createdAt)}</span>
+          <div class="row">
+            <button class="favorite-button ${card.isFavorite ? "active" : ""}" data-action="favorite" data-id="${escapeAttribute(card.id)}" aria-pressed="${card.isFavorite}" title="お気に入りを切り替え">${card.isFavorite ? "★" : "☆"}</button>
+            <span class="date">${formatDate(card.createdAt)}</span>
+          </div>
         </div>
 
-        ${imageSrc ? `
-          <div>
-            <img src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(card.image?.alt || card.title)}" />
-            ${card.image?.caption ? `<div class="image-caption">${escapeHtml(card.image.caption)}</div>` : ""}
-          </div>
-        ` : ""}
+        ${summary ? `<div class="card-summary">${escapeHtml(summary)}</div>` : ""}
 
-        ${fieldHtml("違和感", card.iwakan)}
-        ${fieldHtml("表向きの説明", card.surfaceExplanation)}
-        ${fieldHtml("隠れた前提", card.hiddenAssumption)}
-        ${fieldHtml("本当の論点", card.realIssue)}
-        ${fieldHtml("線引き", card.boundary)}
-        ${fieldHtml("次に見るもの", card.nextWatch)}
+        <div class="card-details ${isCollapsed ? "hidden" : ""}">
+          ${fieldHtml("違和感", card.iwakan)}
+          ${fieldHtml("表向きの説明", card.surfaceExplanation)}
+          ${fieldHtml("隠れた前提", card.hiddenAssumption)}
+          ${fieldHtml("本当の論点", card.realIssue)}
+          ${fieldHtml("線引き", card.boundary)}
+          ${fieldHtml("次に見るもの", card.nextWatch)}
+        </div>
 
         <div class="row">
+          <button class="secondary" data-action="toggle-collapse" data-id="${escapeAttribute(card.id)}">${isCollapsed ? "開く" : "閉じる"}</button>
           <button class="secondary" data-action="edit" data-id="${escapeAttribute(card.id)}">編集</button>
           <button class="ghost" data-action="copy" data-id="${escapeAttribute(card.id)}">JSONコピー</button>
           <button class="danger" data-action="delete" data-id="${escapeAttribute(card.id)}">削除</button>
@@ -774,12 +947,21 @@ JSON形式:
         const action = button.dataset.action;
         const id = button.dataset.id;
 
+        if (action === "favorite") toggleFavorite(id);
+        if (action === "toggle-collapse") toggleCollapse(id);
+        if (action === "tag") applyTagFilter(button.dataset.tag);
         if (action === "edit") openEdit(id);
         if (action === "copy") copyCardJson(id);
         if (action === "delete") deleteCard(id);
       });
 
       return article;
+    }
+
+    function makeSummary(value) {
+      const text = String(value || "").trim();
+      if (!text) return "";
+      return text.length > 90 ? text.slice(0, 90) + "…" : text;
     }
 
     function fieldHtml(label, value) {
@@ -812,44 +994,42 @@ JSON形式:
       return escapeHtml(value).replaceAll("`", "&#096;");
     }
 
-    async function handleImage(file) {
-      if (!file) return;
-
-      if (file.size > 900 * 1024) {
-        setStatus("画像が大きめです。保存はできますが、表示や保存が重くなる場合があります。", "error");
-      }
-
-      const dataUrl = await fileToDataUrl(file);
-      let base = {};
-
-      try {
-        base = JSON.parse(jsonInput.value || "{}");
-      } catch {
-        base = { ...emptyTemplate };
-      }
-
-      base.image = {
-        ...(base.image || {}),
-        type: "dataUrl",
-        dataUrl,
-        url: "",
-        fileName: file.name,
-        caption: base.image?.caption || "",
-        alt: base.image?.alt || base.title || "違和感カードの画像"
-      };
-
-      jsonInput.value = JSON.stringify(base, null, 2);
-      setStatus("画像をJSONに入れました。必要ならcaptionやaltも編集できます。", "ok");
+    function touchCard(id, updater) {
+      cards = cards.map(card => {
+        if (card.id !== id) return card;
+        const updated = { ...card };
+        updater(updated);
+        updated.updatedAt = new Date().toISOString();
+        return updated;
+      });
+      saveCards();
+      render();
     }
 
-    function fileToDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error("画像の読み込みに失敗しました。"));
-        reader.readAsDataURL(file);
+    function toggleFavorite(id) {
+      touchCard(id, card => {
+        card.isFavorite = !card.isFavorite;
+      });
+      setStatus("お気に入りを更新しました。", "ok");
+    }
+
+    function toggleCollapse(id) {
+      touchCard(id, card => {
+        card.isCollapsed = !card.isCollapsed;
       });
     }
+
+    function setAllCollapsed(isCollapsed) {
+      cards = cards.map(card => ({
+        ...card,
+        isCollapsed,
+        updatedAt: new Date().toISOString()
+      }));
+      saveCards();
+      render();
+      setStatus(isCollapsed ? "すべて閉じました。" : "すべて開きました。", "ok");
+    }
+
 
     function saveInputCards() {
       try {
@@ -876,11 +1056,14 @@ JSON形式:
 
     function updateEditingCard() {
       try {
-        const parsed = JSON.parse(editInput.value);
+        const parsed = parseCardText(editInput.value)[0];
         const existing = cards.find(card => card.id === editingId);
         const updated = normalizeCard({
           ...parsed,
-          createdAt: existing?.createdAt || parsed.createdAt
+          isFavorite: parsed.isFavorite ?? existing?.isFavorite ?? false,
+          isCollapsed: parsed.isCollapsed ?? existing?.isCollapsed ?? false,
+          createdAt: existing?.createdAt || parsed.createdAt,
+          updatedAt: new Date().toISOString()
         }, editingId);
 
         cards = cards.map(card => card.id === editingId ? updated : card);
@@ -931,16 +1114,14 @@ JSON形式:
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const parsed = JSON.parse(reader.result);
-          const items = Array.isArray(parsed) ? parsed : [parsed];
-          const imported = items.map(item => normalizeCard(item));
+          const imported = parseCardText(reader.result).map(item => normalizeCard(item));
           cards = cards.filter(card => card.id !== "sample-001");
           cards = [...imported, ...cards];
           saveCards();
           render();
           setStatus(`${imported.length}件をインポートしました。`, "ok");
         } catch (error) {
-          setStatus("インポートできませんでした。JSONファイルの形式を確認してください。", "error");
+          setStatus(`インポートできませんでした。${error.message}`, "error");
         }
       };
       reader.readAsText(file);
@@ -960,10 +1141,6 @@ JSON形式:
       setStatus("入力欄をクリアしました。", "ok");
     });
 
-    imageInput.addEventListener("change", event => {
-      handleImage(event.target.files[0]);
-      event.target.value = "";
-    });
 
     copyPromptBtn.addEventListener("click", async () => {
       await navigator.clipboard.writeText(chatGptPrompt);
@@ -977,6 +1154,18 @@ JSON形式:
 
     searchInput.addEventListener("input", render);
     categoryFilter.addEventListener("change", render);
+    tagFilter.addEventListener("change", render);
+    sortSelect.addEventListener("change", render);
+    favoriteOnlyBtn.addEventListener("click", () => {
+      showFavoritesOnly = !showFavoritesOnly;
+      render();
+    });
+    expandAllBtn.addEventListener("click", () => setAllCollapsed(false));
+    collapseAllBtn.addEventListener("click", () => setAllCollapsed(true));
+    clearTagBtn.addEventListener("click", () => {
+      tagFilter.value = "";
+      render();
+    });
     exportBtn.addEventListener("click", exportCards);
     importInput.addEventListener("change", event => {
       importCards(event.target.files[0]);
