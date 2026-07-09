@@ -132,7 +132,7 @@
 
     .controls {
       display: grid;
-      grid-template-columns: 1fr 170px;
+      grid-template-columns: 1fr 170px 170px;
       gap: 10px;
     }
 
@@ -457,6 +457,9 @@
             <select id="categoryFilter">
               <option value="">すべてのカテゴリ</option>
             </select>
+            <select id="tagFilter">
+              <option value="">すべてのタグ</option>
+            </select>
           </div>
         </div>
 
@@ -582,6 +585,7 @@ JSON形式:
     const loadTemplateBtn = document.getElementById("loadTemplateBtn");
     const searchInput = document.getElementById("searchInput");
     const categoryFilter = document.getElementById("categoryFilter");
+    const tagFilter = document.getElementById("tagFilter");
     const cardsEl = document.getElementById("cards");
     const emptyEl = document.getElementById("empty");
     const exportBtn = document.getElementById("exportBtn");
@@ -673,9 +677,10 @@ JSON形式:
     }
 
     function render() {
-      updateCategoryFilter();
+      updateFilters();
       const keyword = searchInput.value.trim().toLowerCase();
       const category = categoryFilter.value;
+      const tag = tagFilter.value;
 
       const filtered = cards.filter(card => {
         const text = [
@@ -693,7 +698,8 @@ JSON形式:
 
         const matchKeyword = !keyword || text.includes(keyword);
         const matchCategory = !category || card.category === category;
-        return matchKeyword && matchCategory;
+        const matchTag = !tag || (card.tags || []).includes(tag);
+        return matchKeyword && matchCategory && matchTag;
       });
 
       cardsEl.innerHTML = "";
@@ -712,9 +718,11 @@ JSON形式:
         });
     }
 
-    function updateCategoryFilter() {
-      const current = categoryFilter.value;
+    function updateFilters() {
+      const currentCategory = categoryFilter.value;
+      const currentTag = tagFilter.value;
       const categories = [...new Set(cards.map(card => card.category).filter(Boolean))].sort();
+      const tags = [...new Set(cards.flatMap(card => card.tags || []).filter(Boolean))].sort();
 
       categoryFilter.innerHTML = '<option value="">すべてのカテゴリ</option>';
       categories.forEach(category => {
@@ -723,8 +731,16 @@ JSON形式:
         option.textContent = category;
         categoryFilter.appendChild(option);
       });
+      categoryFilter.value = categories.includes(currentCategory) ? currentCategory : "";
 
-      categoryFilter.value = categories.includes(current) ? current : "";
+      tagFilter.innerHTML = '<option value="">すべてのタグ</option>';
+      tags.forEach(tag => {
+        const option = document.createElement("option");
+        option.value = tag;
+        option.textContent = `#${tag}`;
+        tagFilter.appendChild(option);
+      });
+      tagFilter.value = tags.includes(currentTag) ? currentTag : "";
     }
 
     function createCardElement(card) {
@@ -977,6 +993,7 @@ JSON形式:
 
     searchInput.addEventListener("input", render);
     categoryFilter.addEventListener("change", render);
+    tagFilter.addEventListener("change", render);
     exportBtn.addEventListener("click", exportCards);
     importInput.addEventListener("change", event => {
       importCards(event.target.files[0]);
