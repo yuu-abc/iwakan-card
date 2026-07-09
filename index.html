@@ -7,8 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="違和感カード" />
   <link rel="manifest" href="./manifest.json" />
-  <link rel="icon" type="image/png" href="./index.png" />
-  <link rel="apple-touch-icon" href="./index.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
   <title>違和感カード</title>
   <style>
     :root {
@@ -1479,6 +1480,14 @@ JSON形式:
       if (event.target === editDialog) editDialog.close();
     });
 
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(error => {
+          console.error("Service worker registration failed:", error);
+        });
+      });
+    }
 
     init();
   </script>
