@@ -1014,16 +1014,21 @@ JSON形式:
     }
 
     function toggleCollapse(id) {
-      touchCard(id, card => {
-        card.isCollapsed = !card.isCollapsed;
+      cards = cards.map(card => {
+        if (card.id !== id) return card;
+        return {
+          ...card,
+          isCollapsed: !card.isCollapsed
+        };
       });
+      saveCards();
+      render();
     }
 
     function setAllCollapsed(isCollapsed) {
       cards = cards.map(card => ({
         ...card,
-        isCollapsed,
-        updatedAt: new Date().toISOString()
+        isCollapsed
       }));
       saveCards();
       render();
