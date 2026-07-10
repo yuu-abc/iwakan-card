@@ -84,6 +84,211 @@
       align-items: start;
     }
 
+    .workflow-panel {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .workflow-intro {
+      padding: 22px 22px 18px;
+      background: linear-gradient(135deg, #fffdf9, #f0e7dc);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0 0 7px;
+      color: var(--accent-dark);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .workflow-intro h2 {
+      margin-bottom: 4px;
+      font-size: 22px;
+    }
+
+    .workflow-intro p {
+      max-width: 680px;
+      color: var(--muted);
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.65);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .step-number {
+      display: grid;
+      place-items: center;
+      flex: 0 0 24px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--soft);
+      color: var(--accent-dark);
+      font-size: 12px;
+    }
+
+    .step.current {
+      background: var(--accent-dark);
+      color: #fff;
+    }
+
+    .step.current .step-number {
+      background: #fff;
+    }
+
+    .workflow-content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 20px;
+      padding: 20px 22px 22px;
+    }
+
+    .memo-input {
+      min-height: 190px;
+      margin-top: 10px;
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .memo-feedback {
+      min-height: 24px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .json-stage {
+      grid-column: 1 / -1;
+      padding-top: 4px;
+      border-top: 1px solid var(--line);
+    }
+
+    .input-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .input-heading h3 {
+      margin: 0;
+    }
+
+    .input-heading .hint {
+      margin: 0;
+    }
+
+    .json-input {
+      min-height: 260px;
+      margin-top: 10px;
+    }
+
+    .composer-feedback {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 28px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .composer-feedback.ok { color: #31724b; }
+    .composer-feedback.error { color: var(--danger); }
+
+    .save-action {
+      min-width: 180px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+      transform: none;
+    }
+
+    button:disabled:hover {
+      background: var(--accent);
+      transform: none;
+    }
+
+    .prompt-help {
+      align-self: start;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fcfaf7;
+      overflow: hidden;
+    }
+
+    .prompt-help summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px;
+      cursor: pointer;
+      color: var(--accent-dark);
+      font-weight: 800;
+      list-style: none;
+    }
+
+    .prompt-help summary::-webkit-details-marker { display: none; }
+    .prompt-help summary::after { content: "⌄"; font-size: 18px; }
+    .prompt-help[open] summary::after { transform: rotate(180deg); }
+
+    .prompt-help-body {
+      padding: 0 14px 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .prompt-help .template-box {
+      max-height: 250px;
+      margin: 12px 0;
+    }
+
+    .card-count {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .data-menu {
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    .data-menu summary {
+      display: inline-flex;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .data-menu .toolbar-right {
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
     h2 {
       margin: 0 0 10px;
       font-size: 18px;
@@ -564,6 +769,33 @@
         grid-template-columns: 1fr;
       }
 
+      .workflow-intro,
+      .workflow-content {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .workflow-content {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .step {
+        padding: 9px 10px;
+      }
+
+      .json-input {
+        min-height: 230px;
+      }
+
+      .memo-input {
+        min-height: 160px;
+      }
+
       .cards {
         display: flex;
         grid-template-columns: none;
@@ -628,6 +860,14 @@
         width: 100%;
       }
 
+      .data-menu {
+        text-align: left;
+      }
+
+      .data-menu .toolbar-right {
+        justify-content: stretch;
+      }
+
       button,
       .file-label {
         width: 100%;
@@ -683,388 +923,103 @@
   </header>
 
   <main>
-    <section class="panel grid">
-      <div>
-        <h2>JSONを入力</h2>
-        <p class="hint">
-          ChatGPTで整えたJSONを貼り付けて「カードとして保存」を押してください。
-          ```json のコードブロック付きでも取り込めます。
-        </p>
-
-        <textarea id="jsonInput" spellcheck="false" aria-label="違和感カードJSON入力欄"></textarea>
-
-        <div class="row" style="margin-top: 12px;">
-          <button id="saveBtn">カードとして保存</button>
-          <button id="clearBtn" class="secondary">入力欄をクリア</button>
-        </div>
-
-        <div id="status" class="status"></div>
-      </div>
-
-      <aside>
-        <h2>ChatGPTに渡すプロンプト</h2>
-        <p class="hint">この文章をChatGPTに貼って、自由メモをJSONに整えてもらえます。</p>
-        <pre id="promptBox" class="template-box"></pre>
-        <div class="row" style="margin-top: 12px;">
-          <button id="copyPromptBtn" class="secondary">プロンプトをコピー</button>
-          <button id="loadTemplateBtn" class="secondary">空JSONを入力欄へ</button>
-        </div>
-      </aside>
-    </section>
-
-    <section class="panel">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <h2>保存したカード</h2>
-          <div class="controls">
-            <input id="searchInput" type="search" placeholder="キーワード検索：タイトル・タグ・本文など" />
-            <div id="categoryFilter" class="category-buttons" role="listbox" aria-label="カテゴリで絞り込み"></div>
-          </div>
-        </div>
-
-        <div class="toolbar-right">
-          <button id="favoriteFilterBtn" class="secondary" type="button" aria-pressed="false">お気に入りのみ</button>
-          <button id="exportBtn" class="secondary">JSONエクスポート</button>
-          <label class="file-label secondary" for="importInput">JSONインポート</label>
-          <input id="importInput" type="file" accept="application/json,.json" />
-          <button id="deleteAllBtn" class="danger">全削除</button>
+    <section class="panel workflow-panel" aria-labelledby="workflowTitle">
+      <div class="workflow-intro">
+        <p class="eyebrow">保存まで約1分</p>
+        <h2 id="workflowTitle">メモをカードにする</h2>
+        <p>気になったことをそのまま書くと、ChatGPTに渡すJSON整形の依頼文を作れます。</p>
+        <div class="steps" aria-label="カードを保存する手順">
+          <div id="memoStep" class="step current"><span class="step-number">1</span><span>気になったことを書く</span></div>
+          <div id="jsonStep" class="step"><span class="step-number">2</span><span>JSONを貼り付ける</span></div>
+          <div id="saveStep" class="step"><span class="step-number">3</span><span>カードとして保存</span></div>
         </div>
       </div>
 
-      <div class="carousel-nav" aria-label="カードの移動">
-        <button id="prevCardBtn" class="secondary" type="button" aria-label="前のカードへ">←</button>
-        <span id="carouselPosition" class="carousel-position">0 / 0</span>
-        <button id="nextCardBtn" class="secondary" type="button" aria-label="次のカードへ">→</button>
-      </div>
-      <div id="cards" class="cards" style="margin-top: 16px;"></div>
-      <div id="empty" class="empty hidden">まだカードがありません。最初の違和感を入れてみましょう。</div>
-    </section>
-  </main>
-
-  <dialog id="editDialog" class="edit-sheet" aria-labelledby="editSheetTitle">
-    <form id="editForm" class="dialog-inner" method="dialog">
-      <div class="edit-sheet-head">
+      <div class="workflow-content">
         <div>
-          <h2 id="editSheetTitle">カードを編集</h2>
-          <p class="hint">保存済みカードを項目ごとに編集できます。</p>
-        </div>
-        <button id="closeDialogBtn" class="secondary sheet-close" type="button" aria-label="編集画面を閉じる">×</button>
-      </div>
-
-      <div class="edit-form-grid">
-        <label class="edit-field">
-          <span>タイトル</span>
-          <input id="editTitle" type="text" autocomplete="off" />
-        </label>
-
-        <label class="edit-field">
-          <span>カテゴリ</span>
-          <select id="editCategory">
-            <option value="">未選択</option>
-            <option value="仕事">仕事</option>
-            <option value="人間関係">人間関係</option>
-            <option value="投資">投資</option>
-            <option value="社会分析">社会分析</option>
-            <option value="物語">物語</option>
-            <option value="自分の価値観">自分の価値観</option>
-            <option value="その他">その他</option>
-          </select>
-        </label>
-      </div>
-
-      <label class="edit-field">
-        <span>タグ</span>
-        <input id="editTags" type="text" placeholder="改善, 前提, 運用" autocomplete="off" />
-      </label>
-
-      <label class="edit-field">
-        <span>元メモ</span>
-        <textarea id="editMemo"></textarea>
-      </label>
-
-      <label class="edit-field">
-        <span>違和感</span>
-        <textarea id="editIwakan"></textarea>
-      </label>
-
-      <label class="edit-field">
-        <span>表向きの説明</span>
-        <textarea id="editSurfaceExplanation"></textarea>
-      </label>
-
-      <label class="edit-field">
-        <span>隠れた前提</span>
-        <textarea id="editHiddenAssumption"></textarea>
-      </label>
-
-      <label class="edit-field">
-        <span>本当の論点</span>
-        <textarea id="editRealIssue"></textarea>
-      </label>
-
-      <label class="edit-field">
-        <span>線引き</span>
-        <textarea id="editBoundary"></textarea>
-      </label>
-
-      <label class="edit-field">
-        <span>次に見るもの</span>
-        <textarea id="editNextWatch"></textarea>
-      </label>
-
-      <div class="edit-sticky-actions">
-        <button id="updateBtn" type="submit">保存</button>
-        <button class="secondary" type="button" data-close-edit>閉じる</button>
-      </div>
-      <div id="editStatus" class="status" role="status"></div>
-    </form>
-  </dialog>
-
-  <script>
-    const STORAGE_KEY = "iwakanCards.v1";
-
-    const emptyTemplate = {
-      title: "",
-      memo: "",
-      category: "",
-      tags: [],
-      iwakan: "",
-      surfaceExplanation: "",
-      hiddenAssumption: "",
-      realIssue: "",
-      boundary: "",
-      nextWatch: "",
-      image: {
-        url: "",
-        dataUrl: "",
-        fileName: "",
-        caption: "",
-        alt: ""
-      },
-      isFavorite: false,
-      isDetailsOpen: false
-    };
-
-    const sampleCard = {
-      id: "sample-001",
-      title: "表向きの改善に対する違和感",
-      memo: "改善と言われているが、本当に現場が楽になるのか少し引っかかった。",
-      category: "仕事",
-      tags: ["改善", "前提", "運用"],
-      iwakan: "私は、改善という言葉だけで進んでいることに引っかかった。",
-      surfaceExplanation: "表では、効率化のための変更と言われている。",
-      hiddenAssumption: "でもこれは、現場の負担が自然に吸収されることを前提にしている。",
-      realIssue: "問題は変更そのものではなく、運用まで設計されているかである。",
-      boundary: "私は小さな手順変更までは許容できるが、責任の所在が曖昧なまま進むなら危ないと見る。",
-      nextWatch: "変更後に誰の作業が増えるのかを見る。",
-      isFavorite: false,
-      isDetailsOpen: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const chatGptPrompt = `次のメモを、違和感カード用のJSONに整理してください。
-
-ルール:
-- JSONだけを出力してください
-- Markdownや説明文は不要です
-- タイトルを短く付けてください
-- タグを3〜5個付けてください
-- memoには元のメモ内容を残してください
-- category は「仕事 / 人間関係 / 投資 / 社会分析 / 物語 / 自分の価値観」などから近いものを入れてください
-- 分からない項目は空文字にしてください
-- 推測しすぎないでください
-
-JSON形式:
-{
-  "title": "",
-  "memo": "",
-  "category": "",
-  "tags": [],
-  "iwakan": "",
-  "surfaceExplanation": "",
-  "hiddenAssumption": "",
-  "realIssue": "",
-  "boundary": "",
-  "nextWatch": ""
-}
-
-メモ:
-ここにメモを貼る`;
-
-    const jsonInput = document.getElementById("jsonInput");
-    const saveBtn = document.getElementById("saveBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const statusEl = document.getElementById("status");
-    const promptBox = document.getElementById("promptBox");
-    const copyPromptBtn = document.getElementById("copyPromptBtn");
-    const loadTemplateBtn = document.getElementById("loadTemplateBtn");
-    const searchInput = document.getElementById("searchInput");
-    const categoryFilter = document.getElementById("categoryFilter");
-    const cardsEl = document.getElementById("cards");
-    const carouselPosition = document.getElementById("carouselPosition");
-    const prevCardBtn = document.getElementById("prevCardBtn");
-    const nextCardBtn = document.getElementById("nextCardBtn");
-    const emptyEl = document.getElementById("empty");
-    const favoriteFilterBtn = document.getElementById("favoriteFilterBtn");
-    const exportBtn = document.getElementById("exportBtn");
-    const importInput = document.getElementById("importInput");
-    const deleteAllBtn = document.getElementById("deleteAllBtn");
-    const editDialog = document.getElementById("editDialog");
-    const editForm = document.getElementById("editForm");
-    const updateBtn = document.getElementById("updateBtn");
-    const closeDialogBtn = document.getElementById("closeDialogBtn");
-    const editStatus = document.getElementById("editStatus");
-    const editFields = {
-      title: document.getElementById("editTitle"),
-      category: document.getElementById("editCategory"),
-      tags: document.getElementById("editTags"),
-      memo: document.getElementById("editMemo"),
-      iwakan: document.getElementById("editIwakan"),
-      surfaceExplanation: document.getElementById("editSurfaceExplanation"),
-      hiddenAssumption: document.getElementById("editHiddenAssumption"),
-      realIssue: document.getElementById("editRealIssue"),
-      boundary: document.getElementById("editBoundary"),
-      nextWatch: document.getElementById("editNextWatch")
-    };
-
-    const baseCategories = ["", "仕事", "人間関係", "投資", "社会分析", "物語", "自分の価値観", "その他"];
-
-    let cards = [];
-    let editingId = null;
-    let showFavoritesOnly = false;
-    let selectedCategory = "";
-    let carouselIndex = 0;
-    let currentFilteredCount = 0;
-
-    function init() {
-      promptBox.textContent = chatGptPrompt;
-      jsonInput.value = JSON.stringify(emptyTemplate, null, 2);
-      cards = loadCards();
-      render();
+          <div class="input-heading">
+            <h3>① 気になったことをそのまま書く</h3>
+            <p class="hint">箇条書き・話し言葉のままでOK</p>
+          </div>
+          <textarea id="memoInput" class="memo-input" aria-label="自由メモ入力欄" placeholder="例：会議では改善と言われていたが、…4492 tokens truncated…e("current", item === activeStep));
     }
 
-    function loadCards() {
+    function updatePromptPreview() {
+      const memo = memoInput.value.trim();
+      localStorage.setItem(MEMO_DRAFT_STORAGE_KEY, memoInput.value);
+      createPromptBtn.disabled = !memo;
+
+      if (!memo) {
+        promptBox.textContent = "上の枠にメモを入力すると、ここにChatGPTへ渡す依頼文が表示されます。";
+        memoFeedback.textContent = "入力内容をもとに、ChatGPTへ渡す依頼文を作ります。";
+        return;
+      }
+
+      promptBox.textContent = buildChatGptPrompt(memo);
+      memoFeedback.textContent = `${memo.length}文字のメモから依頼文を作成できます。`;
+    }
+
+    async function copyGeneratedPrompt() {
+      const memo = memoInput.value.trim();
+      if (!memo) {
+        setStatus("先に気になったことを入力してください。", "error");
+        return;
+      }
+
+      promptHelp.open = true;
+      setWorkflowStep("json");
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return [sampleCard];
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        return parsed.map(item => {
-          const card = normalizeCard(item, item?.id);
-          card.createdAt = item?.createdAt || card.createdAt;
-          card.updatedAt = item?.updatedAt || card.updatedAt;
-          return card;
-        });
+        await navigator.clipboard.writeText(buildChatGptPrompt(memo));
+        setStatus("ChatGPT用の依頼文をコピーしました。ChatGPTに貼り付け、返ってきたJSONを次の欄へ貼り付けてください。", "ok");
       } catch (error) {
-        console.error(error);
-        return [];
+        setStatus("依頼文を表示しました。コピーできない場合は、表示された文章を選択してコピーしてください。", "ok");
       }
-    }
-
-    function saveCards() {
-      const cardsWithoutSample = cards.filter(card => card.id !== "sample-001");
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cardsWithoutSample, null, 2));
-    }
-
-    function normalizeCard(input, existingId = null) {
-      const now = new Date().toISOString();
-      const source = input && typeof input === "object" ? input : {};
-
-      return {
-        id: existingId || source.id || createId(),
-        title: String(source.title || "無題の違和感"),
-        memo: String(source.memo || ""),
-        category: String(source.category || ""),
-        tags: Array.isArray(source.tags)
-          ? source.tags.map(tag => String(tag)).filter(Boolean)
-          : String(source.tags || "").split(",").map(tag => tag.trim()).filter(Boolean),
-        iwakan: String(source.iwakan || source["違和感"] || ""),
-        surfaceExplanation: String(source.surfaceExplanation || source["表向きの説明"] || ""),
-        hiddenAssumption: String(source.hiddenAssumption || source["隠れた前提"] || ""),
-        realIssue: String(source.realIssue || source["本当の論点"] || ""),
-        boundary: String(source.boundary || source["線引き"] || ""),
-        nextWatch: String(source.nextWatch || source["次に見るもの"] || source["次の行動"] || ""),
-        image: normalizeImage(source.image),
-        isFavorite: Boolean(source.isFavorite || source.favorite || source["お気に入り"]),
-        isDetailsOpen: Boolean(source.isDetailsOpen || source.detailsOpen || source["詳しく見る"]),
-        createdAt: source.createdAt || now,
-        updatedAt: now
-      };
-    }
-
-    function normalizeImage(image) {
-      const source = image && typeof image === "object" ? image : {};
-      return {
-        url: String(source.url || ""),
-        dataUrl: String(source.dataUrl || ""),
-        fileName: String(source.fileName || source.filename || source.name || ""),
-        caption: String(source.caption || ""),
-        alt: String(source.alt || "")
-      };
-    }
-
-    function hasImage(image) {
-      return Boolean(image && (image.url || image.dataUrl || image.fileName || image.caption || image.alt));
-    }
-
-    function parseJson(text) {
-      try {
-        return parseCardText(text).map(item => normalizeCard(item));
-      } catch (error) {
-        throw new Error(error.message || "JSONの形式が正しくありません。カンマ、引用符、閉じカッコを確認してください。");
-      }
-    }
-
-    function parseCardText(text) {
-      const cleaned = cleanJsonText(text);
-      let parsed;
-
-      try {
-        parsed = JSON.parse(cleaned);
-      } catch {
-        throw new Error("JSONの形式が正しくありません。カンマ、引用符、閉じカッコを確認してください。");
-      }
-
-      return extractCardItems(parsed);
-    }
-
-    function cleanJsonText(text) {
-      const trimmed = String(text || "").trim();
-      if (!trimmed) throw new Error("JSONが空です。カード用JSONを貼り付けてください。");
-
-      const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-      const candidate = fenced ? fenced[1].trim() : trimmed;
-      const firstObject = candidate.indexOf("{");
-      const firstArray = candidate.indexOf("[");
-      const starts = [firstObject, firstArray].filter(index => index >= 0);
-      if (starts.length === 0) throw new Error("JSONの開始位置が見つかりません。{ または [ から始まる内容を貼り付けてください。");
-
-      const start = Math.min(...starts);
-      const open = candidate[start];
-      const close = open === "{" ? "}" : "]";
-      const end = candidate.lastIndexOf(close);
-      if (end < start) throw new Error("JSONの閉じカッコが見つかりません。");
-
-      return candidate.slice(start, end + 1);
-    }
-
-    function extractCardItems(parsed) {
-      if (Array.isArray(parsed)) return parsed;
-      if (parsed && Array.isArray(parsed.cards)) return parsed.cards;
-      if (parsed && Array.isArray(parsed.items)) return parsed.items;
-      if (parsed && typeof parsed === "object") return [parsed];
-      throw new Error("カードとして読み込めるJSONオブジェクトがありません。");
-    }
-
-    function createId() {
-      if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-      return `card-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     }
 
     function setStatus(message, type = "") {
       statusEl.textContent = message;
       statusEl.className = "status " + type;
+    }
+
+    function isMeaningfulCard(card) {
+      return Boolean(card.title && card.title !== "無題の違和感") || Boolean(card.memo.trim()) || Boolean(card.iwakan.trim()) || Boolean(card.realIssue.trim());
+    }
+
+    function updateComposer() {
+      const text = jsonInput.value.trim();
+      localStorage.setItem(DRAFT_STORAGE_KEY, jsonInput.value);
+
+      if (!text) {
+        saveBtn.disabled = true;
+        composerFeedback.textContent = "JSONを貼り付けると、ここで保存前に確認できます。";
+        composerFeedback.className = "composer-feedback";
+        setWorkflowStep(memoInput.value.trim() ? "json" : "memo");
+        return;
+      }
+
+      try {
+        const parsed = parseJson(text);
+        const meaningful = parsed.filter(isMeaningfulCard);
+        if (!meaningful.length) {
+          saveBtn.disabled = true;
+          composerFeedback.textContent = "カードの内容を入力してください。タイトル・元メモ・違和感・本当の論点のいずれかが必要です。";
+          composerFeedback.className = "composer-feedback error";
+          return;
+        }
+
+        const first = meaningful[0];
+        const label = first.title || "無題の違和感";
+        const category = first.category ? ` / ${first.category}` : "";
+        composerFeedback.textContent = `${meaningful.length}件を保存できます：${label}${category}`;
+        composerFeedback.className = "composer-feedback ok";
+        saveBtn.disabled = false;
+        setWorkflowStep("save");
+      } catch (error) {
+        saveBtn.disabled = true;
+        composerFeedback.textContent = error.message;
+        composerFeedback.className = "composer-feedback error";
+        setWorkflowStep("json");
+      }
     }
 
     function setEditStatus(message, type = "") {
@@ -1078,6 +1033,9 @@ JSON形式:
       const category = selectedCategory;
       favoriteFilterBtn.classList.toggle("active", showFavoritesOnly);
       favoriteFilterBtn.setAttribute("aria-pressed", String(showFavoritesOnly));
+
+      const savedCardCount = cards.filter(card => card.id !== "sample-001").length;
+      cardCount.textContent = savedCardCount ? `${savedCardCount}件のカード` : "お試しカードを表示中";
 
       const filtered = cards.filter(card => {
         const text = [
@@ -1307,11 +1265,15 @@ JSON形式:
 
     function saveInputCards() {
       try {
-        const newCards = parseJson(jsonInput.value);
+        const newCards = parseJson(jsonInput.value).filter(isMeaningfulCard);
+        if (!newCards.length) throw new Error("カードの内容を入力してください。");
         cards = cards.filter(card => card.id !== "sample-001");
         cards = [...newCards, ...cards];
         saveCards();
         render();
+        jsonInput.value = "";
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        updateComposer();
         setStatus(`${newCards.length}件のカードを保存しました。`, "ok");
       } catch (error) {
         setStatus(error.message, "error");
@@ -1427,20 +1389,26 @@ JSON形式:
     saveBtn.addEventListener("click", saveInputCards);
     clearBtn.addEventListener("click", () => {
       jsonInput.value = "";
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      updateComposer();
       setStatus("入力欄をクリアしました。", "ok");
     });
 
 
-    copyPromptBtn.addEventListener("click", async () => {
-      await navigator.clipboard.writeText(chatGptPrompt);
-      setStatus("プロンプトをコピーしました。", "ok");
-    });
+    createPromptBtn.addEventListener("click", copyGeneratedPrompt);
+    copyPromptBtn.addEventListener("click", copyGeneratedPrompt);
 
     loadTemplateBtn.addEventListener("click", () => {
       jsonInput.value = JSON.stringify(emptyTemplate, null, 2);
+      updateComposer();
       setStatus("空JSONを入力欄に入れました。", "ok");
     });
 
+    memoInput.addEventListener("input", () => {
+      updatePromptPreview();
+      updateComposer();
+    });
+    jsonInput.addEventListener("input", updateComposer);
     searchInput.addEventListener("input", render);
     categoryFilter.addEventListener("click", event => {
       const button = event.target.closest("button[data-category]");
@@ -1493,3 +1461,4 @@ JSON形式:
   </script>
 </body>
 </html>
+
