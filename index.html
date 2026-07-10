@@ -918,7 +918,7 @@
     <h1 class="app-title">違和感カード</h1>
     <p class="subtitle">
       小さな引っかかりを、流さずに残すためのカード型メモです。
-      JSONを貼り付けて保存すると、「違和感」「隠れた前提」「本当の論点」「線引き」をあとで見返せます。
+      自由入力からChatGPT用の依頼文を作り、返ってきたJSONをカードとして保存できます。
     </p>
   </header>
 
@@ -927,9 +927,9 @@
       <div class="workflow-intro">
         <p class="eyebrow">保存まで約1分</p>
         <h2 id="workflowTitle">メモをカードにする</h2>
-        <p>気になったことをそのまま書くと、ChatGPTに渡すJSON整形の依頼文を作れます。</p>
+        <p>まず自由入力の枠に内容を書き、「依頼文を作成してコピー」でChatGPTに渡す依頼文を作成します。</p>
         <div class="steps" aria-label="カードを保存する手順">
-          <div id="memoStep" class="step current"><span class="step-number">1</span><span>気になったことを書く</span></div>
+          <div id="memoStep" class="step current"><span class="step-number">1</span><span>依頼文を作成</span></div>
           <div id="jsonStep" class="step"><span class="step-number">2</span><span>JSONを貼り付ける</span></div>
           <div id="saveStep" class="step"><span class="step-number">3</span><span>カードとして保存</span></div>
         </div>
@@ -938,525 +938,155 @@
       <div class="workflow-content">
         <div>
           <div class="input-heading">
-            <h3>① 気になったことをそのまま書く</h3>
-            <p class="hint">箇条書き・話し言葉のままでOK</p>
+            <h3>① 文章を自由に入力</h3>
+            <p class="hint">ChatGPT用の依頼文の元になります</p>
           </div>
-          <textarea id="memoInput" class="memo-input" aria-label="自由メモ入力欄" placeholder="例：会議では改善と言われていたが、…4515 tokens truncated… memo = memoInput.value.trim();
-      localStorage.setItem(MEMO_DRAFT_STORAGE_KEY, memoInput.value);
-      createPromptBtn.disabled = !memo;
-
-      if (!memo) {
-        promptBox.textContent = "上の枠にメモを入力すると、ここにChatGPTへ渡す依頼文が表示されます。";
-        memoFeedback.textContent = "入力内容をもとに、ChatGPTへ渡す依頼文を作ります。";
-        return;
-      }
-
-      promptBox.textContent = buildChatGptPrompt(memo);
-      memoFeedback.textContent = `${memo.length}文字のメモから依頼文を作成できます。`;
-    }
-
-    async function copyGeneratedPrompt() {
-      const memo = memoInput.value.trim();
-      if (!memo) {
-        setStatus("先に気になったことを入力してください。", "error");
-        return;
-      }
-
-      promptHelp.open = true;
-      setWorkflowStep("json");
-      try {
-        await navigator.clipboard.writeText(buildChatGptPrompt(memo));
-        setStatus("ChatGPT用の依頼文をコピーしました。ChatGPTに貼り付け、返ってきたJSONを次の欄へ貼り付けてください。", "ok");
-      } catch (error) {
-        setStatus("依頼文を表示しました。コピーできない場合は、表示された文章を選択してコピーしてください。", "ok");
-      }
-    }
-
-    function setStatus(message, type = "") {
-      statusEl.textContent = message;
-      statusEl.className = "status " + type;
-    }
-
-    function isMeaningfulCard(card) {
-      return Boolean(card.title && card.title !== "無題の違和感") || Boolean(card.memo.trim()) || Boolean(card.iwakan.trim()) || Boolean(card.realIssue.trim());
-    }
-
-    function updateComposer() {
-      const text = jsonInput.value.trim();
-      localStorage.setItem(DRAFT_STORAGE_KEY, jsonInput.value);
-
-      if (!text) {
-        saveBtn.disabled = true;
-        composerFeedback.textContent = "JSONを貼り付けると、ここで保存前に確認できます。";
-        composerFeedback.className = "composer-feedback";
-        setWorkflowStep(memoInput.value.trim() ? "json" : "memo");
-        return;
-      }
-
-      try {
-        const parsed = parseJson(text);
-        const meaningful = parsed.filter(isMeaningfulCard);
-        if (!meaningful.length) {
-          saveBtn.disabled = true;
-          composerFeedback.textContent = "カードの内容を入力してください。タイトル・元メモ・違和感・本当の論点のいずれかが必要です。";
-          composerFeedback.className = "composer-feedback error";
-          return;
-        }
-
-        const first = meaningful[0];
-        const label = first.title || "無題の違和感";
-        const category = first.category ? ` / ${first.category}` : "";
-        composerFeedback.textContent = `${meaningful.length}件を保存できます：${label}${category}`;
-        composerFeedback.className = "composer-feedback ok";
-        saveBtn.disabled = false;
-        setWorkflowStep("save");
-      } catch (error) {
-        saveBtn.disabled = true;
-        composerFeedback.textContent = error.message;
-        composerFeedback.className = "composer-feedback error";
-        setWorkflowStep("json");
-      }
-    }
-
-    function setEditStatus(message, type = "") {
-      editStatus.textContent = message;
-      editStatus.className = "status " + type;
-    }
-
-    function render() {
-      updateFilters();
-      const keyword = searchInput.value.trim().toLowerCase();
-      const category = selectedCategory;
-      favoriteFilterBtn.classList.toggle("active", showFavoritesOnly);
-      favoriteFilterBtn.setAttribute("aria-pressed", String(showFavoritesOnly));
-
-      const savedCardCount = cards.filter(card => card.id !== "sample-001").length;
-      cardCount.textContent = savedCardCount ? `${savedCardCount}件のカード` : "お試しカードを表示中";
-
-      const filtered = cards.filter(card => {
-        const text = [
-          card.title,
-          card.memo,
-          card.category,
-          ...(card.tags || []),
-          card.iwakan,
-          card.surfaceExplanation,
-          card.hiddenAssumption,
-          card.realIssue,
-          card.boundary,
-          card.nextWatch,
-          card.image?.caption,
-          card.image?.alt,
-          card.image?.fileName,
-          card.isFavorite ? "お気に入り favorite" : ""
-        ].join(" ").toLowerCase();
-
-        const matchKeyword = !keyword || text.includes(keyword);
-        const matchCategory = !category || card.category === category;
-        const matchFavorite = !showFavoritesOnly || card.isFavorite;
-        return matchKeyword && matchCategory && matchFavorite;
-      });
-
-      cardsEl.innerHTML = "";
-      currentFilteredCount = filtered.length;
-      carouselIndex = 0;
-      updateCarouselPosition();
-
-      if (filtered.length === 0) {
-        emptyEl.classList.remove("hidden");
-        return;
-      }
-
-      emptyEl.classList.add("hidden");
-
-      filtered
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-        .forEach(card => {
-          cardsEl.appendChild(createCardElement(card));
-        });
-      cardsEl.scrollLeft = 0;
-      updateCarouselPosition();
-    }
-
-    function updateFilters() {
-      const categories = [...new Set([...baseCategories, ...cards.map(card => card.category).filter(Boolean)])];
-      if (!categories.includes(selectedCategory)) selectedCategory = "";
-
-      categoryFilter.innerHTML = "";
-      categories.forEach(category => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = `category-filter-button${category === selectedCategory ? " active" : ""}`;
-        button.dataset.category = category;
-        button.setAttribute("role", "option");
-        button.setAttribute("aria-selected", String(category === selectedCategory));
-        button.textContent = category || "すべて";
-        categoryFilter.appendChild(button);
-      });
-    }
-
-    function updateCarouselPosition() {
-      const total = currentFilteredCount;
-      const current = total === 0 ? 0 : Math.min(carouselIndex + 1, total);
-      carouselPosition.textContent = `${current} / ${total}`;
-      prevCardBtn.disabled = total <= 1 || carouselIndex === 0;
-      nextCardBtn.disabled = total <= 1 || carouselIndex >= total - 1;
-    }
-
-    function scrollCarousel(direction) {
-      if (!currentFilteredCount) return;
-      carouselIndex = Math.max(0, Math.min(currentFilteredCount - 1, carouselIndex + direction));
-      const target = cardsEl.children[carouselIndex];
-      if (target) target.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-      updateCarouselPosition();
-    }
-
-    function createCardElement(card) {
-      const article = document.createElement("article");
-      article.className = "card";
-
-      const tagsHtml = (card.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join("");
-
-      article.innerHTML = `
-        <div class="card-head">
-          <div>
-            <div class="card-title-row">
-              ${card.isFavorite ? `<span class="favorite-mark" aria-label="お気に入り">★</span>` : ""}
-              <h3 class="card-title">${escapeHtml(card.title)}</h3>
-            </div>
-            <div class="meta">
-              ${card.category ? `<span class="category">${escapeHtml(card.category)}</span>` : ""}
-              ${tagsHtml}
-            </div>
+          <textarea id="memoInput" class="memo-input" aria-label="ChatGPTに依頼したい内容の自由入力欄" placeholder="例：会議で感じた違和感、SNSで見た発言、ニュースへの引っかかりなどをそのまま入力してください。"></textarea>
+          <p id="memoFeedback" class="memo-feedback">入力内容をもとに、ChatGPTへ渡す依頼文を作ります。</p>
+          <div class="row">
+            <button id="createPromptBtn" type="button" disabled>依頼文を作成してコピー</button>
           </div>
-          <span class="date">${formatDate(card.createdAt)}</span>
         </div>
 
-        <div class="card-body" id="card-body-${escapeAttribute(card.id)}">
-          ${fieldHtml("違和感", card.iwakan)}
-          ${fieldHtml("本当の論点", card.realIssue)}
-          ${fieldHtml("次に見るもの", card.nextWatch)}
+        <details id="promptHelp" class="prompt-help" open>
+          <summary>ChatGPT用の依頼文プレビュー</summary>
+          <div class="prompt-help-body">
+            <p class="hint">自由入力から生成される依頼文です。コピーできない場合はここから手動でコピーしてください。</p>
+            <pre id="promptBox" class="template-box">左の枠に文章を入力すると、ここにChatGPTへ渡す依頼文が表示されます。</pre>
+            <button id="copyPromptBtn" type="button" class="secondary">表示中の依頼文をコピー</button>
+          </div>
+        </details>
+
+        <div class="json-stage">
+          <div class="input-heading">
+            <h3>② ChatGPTから返ったJSONを貼り付ける</h3>
+            <p class="hint">配列JSON・単体JSONどちらでもOK</p>
+          </div>
+          <textarea id="jsonInput" class="json-input" aria-label="ChatGPTから返ったJSON入力欄" placeholder='[{"title":"...","iwakan":"..."}]'></textarea>
+          <div id="composerFeedback" class="composer-feedback">JSONを貼り付けると、ここで保存前に確認できます。</div>
+          <div class="row">
+            <button id="saveBtn" class="save-action" type="button" disabled>カードとして保存</button>
+            <button id="clearBtn" type="button" class="secondary">入力欄をクリア</button>
+            <button id="loadTemplateBtn" type="button" class="ghost">空JSONを入れる</button>
+          </div>
+          <p id="status" class="status" role="status"></p>
         </div>
+      </div>
+    </section>
 
-        <div class="card-details${card.isDetailsOpen ? "" : " hidden"}" id="card-details-${escapeAttribute(card.id)}">
-          ${fieldHtml("表向きの説明", card.surfaceExplanation)}
-          ${fieldHtml("隠れた前提", card.hiddenAssumption)}
-          ${fieldHtml("線引き", card.boundary)}
-          ${fieldHtml("元メモ", card.memo)}
-          ${imageHtml(card.image)}
+    <section class="panel">
+      <div class="toolbar">
+        <div class="toolbar-left controls">
+          <input id="searchInput" type="search" placeholder="キーワードで検索" aria-label="カード検索">
+          <div id="categoryFilter" class="category-buttons" role="listbox" aria-label="カテゴリで絞り込み"></div>
         </div>
-
-        <button class="secondary details-button" data-action="toggle-details" data-id="${escapeAttribute(card.id)}" aria-expanded="${card.isDetailsOpen}" aria-controls="card-details-${escapeAttribute(card.id)}">${card.isDetailsOpen ? "閉じる" : "詳しく見る"}</button>
-
-        <div class="row card-actions">
-          <button class="ghost icon-button favorite-button${card.isFavorite ? " active" : ""}" data-action="favorite" data-id="${escapeAttribute(card.id)}" aria-pressed="${card.isFavorite}">${card.isFavorite ? "★ お気に入り" : "☆ お気に入り"}</button>
-          <button class="secondary" data-action="edit" data-id="${escapeAttribute(card.id)}">編集</button>
-          <button class="ghost" data-action="copy" data-id="${escapeAttribute(card.id)}">JSONコピー</button>
-          <button class="danger" data-action="delete" data-id="${escapeAttribute(card.id)}">削除</button>
+        <div class="toolbar-right">
+          <button id="favoriteFilterBtn" class="secondary" type="button" aria-pressed="false">★ お気に入りのみ</button>
         </div>
-      `;
-
-      article.addEventListener("click", event => {
-        const button = event.target.closest("button");
-        if (!button) return;
-
-        const action = button.dataset.action;
-        const id = button.dataset.id;
-
-        if (action === "favorite") toggleFavorite(id);
-        if (action === "toggle-details") toggleDetails(id, button);
-        if (action === "edit") openEdit(id);
-        if (action === "copy") copyCardJson(id);
-        if (action === "delete") deleteCard(id);
-      });
-
-      return article;
-    }
-
-    function imageHtml(image) {
-      if (!hasImage(image)) return "";
-      const src = image.dataUrl || image.url;
-      const preview = src ? `<img class="card-image" src="${escapeAttribute(src)}" alt="${escapeAttribute(image.alt || image.caption || "カード画像")}" loading="lazy">` : "";
-      return `
-        <div class="field">
-          <strong>画像</strong>
-          ${preview}
-          ${image.caption ? `<span>${escapeHtml(image.caption)}</span>` : ""}
-          ${image.fileName ? `<span class="small">${escapeHtml(image.fileName)}</span>` : ""}
+      </div>
+      <details class="data-menu">
+        <summary>データの管理</summary>
+        <div class="toolbar-right">
+          <button id="exportBtn" class="secondary" type="button">JSONエクスポート</button>
+          <label class="file-label secondary" for="importInput">JSONインポート</label>
+          <input id="importInput" type="file" accept="application/json,.json">
+          <button id="deleteAllBtn" class="danger" type="button">すべて削除</button>
         </div>
-      `;
-    }
+      </details>
+    </section>
 
-    function fieldHtml(label, value) {
-      if (!value) return "";
-      return `
-        <div class="field">
-          <strong>${escapeHtml(label)}</strong>
-          <span>${escapeHtml(value)}</span>
-        </div>
-      `;
-    }
+    <section class="panel" aria-labelledby="cardListTitle">
+      <h2 id="cardListTitle">保存したカード</h2>
+      <p id="cardCount" class="card-count"></p>
+      <div id="cards" class="cards"></div>
+      <div id="empty" class="empty hidden">条件に合うカードはありません。</div>
+      <div class="carousel-nav" aria-label="カード送り">
+        <button id="prevCardBtn" type="button" class="secondary">‹</button>
+        <span id="carouselPosition" class="carousel-position">0 / 0</span>
+        <button id="nextCardBtn" type="button" class="secondary">›</button>
+      </div>
+    </section>
+  </main>
 
-    function formatDate(iso) {
-      if (!iso) return "";
-      const date = new Date(iso);
-      if (Number.isNaN(date.getTime())) return "";
-      return date.toLocaleDateString("ja-JP");
-    }
+  <dialog id="editDialog" class="edit-sheet">
+    <form id="editForm" class="dialog-inner" method="dialog">
+      <div class="edit-sheet-head">
+        <div><h2>カードを編集</h2><p id="editStatus" class="status"></p></div>
+        <button id="closeDialogBtn" class="secondary sheet-close" type="button" aria-label="閉じる">×</button>
+      </div>
+      <div class="edit-form-grid">
+        <label class="edit-field"><span>タイトル</span><input id="editTitle"></label>
+        <label class="edit-field"><span>カテゴリ</span><input id="editCategory"></label>
+      </div>
+      <label class="edit-field"><span>タグ（カンマ区切り）</span><input id="editTags"></label>
+      <label class="edit-field"><span>元メモ</span><textarea id="editMemo"></textarea></label>
+      <div class="edit-form-grid">
+        <label class="edit-field"><span>違和感</span><textarea id="editIwakan"></textarea></label>
+        <label class="edit-field"><span>表向きの説明</span><textarea id="editSurface"></textarea></label>
+        <label class="edit-field"><span>隠れた前提</span><textarea id="editHidden"></textarea></label>
+        <label class="edit-field"><span>本当の論点</span><textarea id="editReal"></textarea></label>
+        <label class="edit-field"><span>線引き</span><textarea id="editBoundary"></textarea></label>
+        <label class="edit-field"><span>次に見るもの</span><textarea id="editNext"></textarea></label>
+      </div>
+      <div class="edit-sticky-actions">
+        <button type="submit">保存</button>
+        <button type="button" class="secondary" data-close-edit>キャンセル</button>
+      </div>
+    </form>
+  </dialog>
 
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
+  <script>
 
-    function escapeAttribute(value) {
-      return escapeHtml(value).replaceAll("`", "&#096;");
-    }
+    const STORAGE_KEY = "iwakanCards.v1";
+    const DRAFT_STORAGE_KEY = "iwakanJsonDraft.v1";
+    const MEMO_DRAFT_STORAGE_KEY = "iwakanMemoDraft.v1";
+    const baseCategories = ["", "仕事", "社会", "人間関係", "ニュース", "自分", "その他"];
+    const emptyTemplate = { title: "", category: "", tags: [], memo: "", iwakan: "", surfaceExplanation: "", hiddenAssumption: "", realIssue: "", boundary: "", nextWatch: "" };
+    const sampleCard = { id: "sample-001", title: "サンプル：小さな違和感を残す", category: "使い方", tags: ["サンプル"], memo: "ここに元のメモが入ります。", iwakan: "言葉にしづらい引っかかりを残します。", surfaceExplanation: "表向きには自然に見える説明。", hiddenAssumption: "見落としている前提。", realIssue: "本当に考えたい論点。", boundary: "ここから先は受け入れない、などの線引き。", nextWatch: "次に観察すること。", image: null, isFavorite: false, isDetailsOpen: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
 
+    const $ = id => document.getElementById(id);
+    const memoInput = $("memoInput"), jsonInput = $("jsonInput"), createPromptBtn = $("createPromptBtn"), copyPromptBtn = $("copyPromptBtn"), promptBox = $("promptBox"), promptHelp = $("promptHelp"), memoFeedback = $("memoFeedback"), composerFeedback = $("composerFeedback"), saveBtn = $("saveBtn"), clearBtn = $("clearBtn"), loadTemplateBtn = $("loadTemplateBtn"), statusEl = $("status"), searchInput = $("searchInput"), categoryFilter = $("categoryFilter"), favoriteFilterBtn = $("favoriteFilterBtn"), exportBtn = $("exportBtn"), importInput = $("importInput"), deleteAllBtn = $("deleteAllBtn"), cardsEl = $("cards"), emptyEl = $("empty"), cardCount = $("cardCount"), prevCardBtn = $("prevCardBtn"), nextCardBtn = $("nextCardBtn"), carouselPosition = $("carouselPosition"), editDialog = $("editDialog"), editForm = $("editForm"), closeDialogBtn = $("closeDialogBtn"), editStatus = $("editStatus");
+    const editFields = { title: $("editTitle"), category: $("editCategory"), tags: $("editTags"), memo: $("editMemo"), iwakan: $("editIwakan"), surfaceExplanation: $("editSurface"), hiddenAssumption: $("editHidden"), realIssue: $("editReal"), boundary: $("editBoundary"), nextWatch: $("editNext") };
+    let cards = [], selectedCategory = "", showFavoritesOnly = false, editingId = null, carouselIndex = 0, currentFilteredCount = 0;
 
-    function updateCardState(id, changes, message) {
-      cards = cards.map(card => {
-        if (card.id !== id) return card;
-        return {
-          ...card,
-          ...changes,
-          updatedAt: new Date().toISOString()
-        };
-      });
-      saveCards();
-      render();
-      if (message) setStatus(message, "ok");
-    }
+    function init() { cards = loadCards(); memoInput.value = localStorage.getItem(MEMO_DRAFT_STORAGE_KEY) || ""; jsonInput.value = localStorage.getItem(DRAFT_STORAGE_KEY) || ""; updatePromptPreview(); updateComposer(); render(); }
+    function loadCards() { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); return saved.length ? saved.map(normalizeCard) : [sampleCard]; } catch { return [sampleCard]; } }
+    function saveCards() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cards.filter(card => card.id !== "sample-001"))); }
+    function parseCardText(text) { const parsed = JSON.parse(text); return Array.isArray(parsed) ? parsed : [parsed]; }
+    function parseJson(text) { try { return parseCardText(text).map(normalizeCard); } catch { throw new Error("JSONの形式を確認してください。ChatGPTの返答からJSON部分だけを貼り付けてください。"); } }
+    function normalizeCard(item) { const now = new Date().toISOString(); return { id: item.id || crypto.randomUUID(), title: item.title || "無題の違和感", category: item.category || "", tags: Array.isArray(item.tags) ? item.tags : String(item.tags || "").split(",").map(v => v.trim()).filter(Boolean), memo: item.memo || item.originalText || "", iwakan: item.iwakan || item.discomfort || "", surfaceExplanation: item.surfaceExplanation || item.surface || "", hiddenAssumption: item.hiddenAssumption || item.assumption || "", realIssue: item.realIssue || item.issue || "", boundary: item.boundary || "", nextWatch: item.nextWatch || item.next || "", image: item.image || null, isFavorite: Boolean(item.isFavorite), isDetailsOpen: Boolean(item.isDetailsOpen), createdAt: item.createdAt || now, updatedAt: item.updatedAt || now }; }
+    function hasImage(image) { return Boolean(image && (image.url || image.dataUrl)); }
+    function buildChatGptPrompt(memo) { return `以下の文章を「違和感カード」用のJSONに整理してください。\n\n条件:\n- 返答はJSONだけにしてください。説明文やMarkdownコードブロックは不要です。\n- 単体ではなく、必ず配列JSONで返してください。\n- 日本語で、短く読み返しやすい表現にしてください。\n- 情報がない項目は空文字または空配列にしてください。\n\nJSONのキー:\ntitle, category, tags, memo, iwakan, surfaceExplanation, hiddenAssumption, realIssue, boundary, nextWatch\n\n入力文:\n${memo}`; }
+    function setWorkflowStep(step) { [["memo", $("memoStep")], ["json", $("jsonStep")], ["save", $("saveStep")]].forEach(([name, el]) => el.classList.toggle("current", name === step)); }
+    function updatePromptPreview() { const memo = memoInput.value.trim(); localStorage.setItem(MEMO_DRAFT_STORAGE_KEY, memoInput.value); createPromptBtn.disabled = !memo; promptBox.textContent = memo ? buildChatGptPrompt(memo) : "左の枠に文章を入力すると、ここにChatGPTへ渡す依頼文が表示されます。"; memoFeedback.textContent = memo ? `${memo.length}文字の入力から依頼文を作成できます。` : "入力内容をもとに、ChatGPTへ渡す依頼文を作ります。"; }
+    async function copyGeneratedPrompt() { const memo = memoInput.value.trim(); if (!memo) return setStatus("先に文章を入力してください。", "error"); promptHelp.open = true; setWorkflowStep("json"); try { await navigator.clipboard.writeText(buildChatGptPrompt(memo)); setStatus("ChatGPT用の依頼文をコピーしました。ChatGPTに貼り付け、返ってきたJSONを次の欄へ貼り付けてください。", "ok"); } catch { setStatus("依頼文を表示しました。コピーできない場合は、表示された文章を選択してコピーしてください。", "ok"); } }
+    function setStatus(message, type = "") { statusEl.textContent = message; statusEl.className = "status " + type; }
+    function isMeaningfulCard(card) { return Boolean((card.title && card.title !== "無題の違和感") || card.memo.trim() || card.iwakan.trim() || card.realIssue.trim()); }
+    function updateComposer() { const text = jsonInput.value.trim(); localStorage.setItem(DRAFT_STORAGE_KEY, jsonInput.value); if (!text) { saveBtn.disabled = true; composerFeedback.textContent = "JSONを貼り付けると、ここで保存前に確認できます。"; composerFeedback.className = "composer-feedback"; setWorkflowStep(memoInput.value.trim() ? "json" : "memo"); return; } try { const meaningful = parseJson(text).filter(isMeaningfulCard); if (!meaningful.length) throw new Error("カードの内容を入力してください。タイトル・元メモ・違和感・本当の論点のいずれかが必要です。"); composerFeedback.textContent = `${meaningful.length}件を保存できます：${meaningful[0].title}${meaningful[0].category ? " / " + meaningful[0].category : ""}`; composerFeedback.className = "composer-feedback ok"; saveBtn.disabled = false; setWorkflowStep("save"); } catch (error) { saveBtn.disabled = true; composerFeedback.textContent = error.message; composerFeedback.className = "composer-feedback error"; setWorkflowStep("json"); } }
+    function render() { updateFilters(); const keyword = searchInput.value.trim().toLowerCase(); favoriteFilterBtn.classList.toggle("active", showFavoritesOnly); favoriteFilterBtn.setAttribute("aria-pressed", String(showFavoritesOnly)); const savedCardCount = cards.filter(card => card.id !== "sample-001").length; cardCount.textContent = savedCardCount ? `${savedCardCount}件のカード` : "お試しカードを表示中"; const filtered = cards.filter(card => [card.title, card.memo, card.category, ...(card.tags || []), card.iwakan, card.surfaceExplanation, card.hiddenAssumption, card.realIssue, card.boundary, card.nextWatch, card.isFavorite ? "お気に入り favorite" : ""].join(" ").toLowerCase().includes(keyword) && (!selectedCategory || card.category === selectedCategory) && (!showFavoritesOnly || card.isFavorite)); cardsEl.innerHTML = ""; currentFilteredCount = filtered.length; carouselIndex = 0; updateCarouselPosition(); emptyEl.classList.toggle("hidden", filtered.length !== 0); filtered.sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).forEach(card => cardsEl.appendChild(createCardElement(card))); updateCarouselPosition(); }
+    function updateFilters() { const categories = [...new Set([...baseCategories, ...cards.map(card => card.category).filter(Boolean)])]; if (!categories.includes(selectedCategory)) selectedCategory = ""; categoryFilter.innerHTML = ""; categories.forEach(category => { const button = document.createElement("button"); button.type = "button"; button.className = `category-filter-button${category === selectedCategory ? " active" : ""}`; button.dataset.category = category; button.textContent = category || "すべて"; categoryFilter.appendChild(button); }); }
+    function updateCarouselPosition() { const total = currentFilteredCount, current = total === 0 ? 0 : Math.min(carouselIndex + 1, total); carouselPosition.textContent = `${current} / ${total}`; prevCardBtn.disabled = total <= 1 || carouselIndex === 0; nextCardBtn.disabled = total <= 1 || carouselIndex >= total - 1; }
+    function scrollCarousel(direction) { carouselIndex = Math.max(0, Math.min(currentFilteredCount - 1, carouselIndex + direction)); cardsEl.children[carouselIndex]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); updateCarouselPosition(); }
+    function createCardElement(card) { const article = document.createElement("article"); article.className = "card"; const tagsHtml = (card.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join(""); article.innerHTML = `<div class="card-head"><div><div class="card-title-row">${card.isFavorite ? `<span class="favorite-mark" aria-label="お気に入り">★</span>` : ""}<h3 class="card-title">${escapeHtml(card.title)}</h3></div><div class="meta">${card.category ? `<span class="category">${escapeHtml(card.category)}</span>` : ""}${tagsHtml}</div></div><span class="date">${formatDate(card.createdAt)}</span></div><div class="card-body">${fieldHtml("違和感", card.iwakan)}${fieldHtml("本当の論点", card.realIssue)}${fieldHtml("次に見るもの", card.nextWatch)}</div><div class="card-details${card.isDetailsOpen ? "" : " hidden"}">${fieldHtml("表向きの説明", card.surfaceExplanation)}${fieldHtml("隠れた前提", card.hiddenAssumption)}${fieldHtml("線引き", card.boundary)}${fieldHtml("元メモ", card.memo)}${imageHtml(card.image)}</div><button class="secondary details-button" data-action="toggle-details" data-id="${escapeAttribute(card.id)}">${card.isDetailsOpen ? "閉じる" : "詳しく見る"}</button><div class="row card-actions"><button class="ghost icon-button favorite-button${card.isFavorite ? " active" : ""}" data-action="favorite" data-id="${escapeAttribute(card.id)}">${card.isFavorite ? "★ お気に入り" : "☆ お気に入り"}</button><button class="secondary" data-action="edit" data-id="${escapeAttribute(card.id)}">編集</button><button class="ghost" data-action="copy" data-id="${escapeAttribute(card.id)}">JSONコピー</button><button class="danger" data-action="delete" data-id="${escapeAttribute(card.id)}">削除</button></div>`; article.addEventListener("click", event => { const button = event.target.closest("button"); if (!button) return; const { action, id } = button.dataset; if (action === "favorite") toggleFavorite(id); if (action === "toggle-details") toggleDetails(id); if (action === "edit") openEdit(id); if (action === "copy") copyCardJson(id); if (action === "delete") deleteCard(id); }); return article; }
+    function imageHtml(image) { if (!hasImage(image)) return ""; const src = image.dataUrl || image.url; return `<div class="field"><strong>画像</strong><img class="card-image" src="${escapeAttribute(src)}" alt="${escapeAttribute(image.alt || image.caption || "カード画像")}" loading="lazy">${image.caption ? `<span>${escapeHtml(image.caption)}</span>` : ""}</div>`; }
+    function fieldHtml(label, value) { return value ? `<div class="field"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>` : ""; }
+    function formatDate(iso) { const date = new Date(iso); return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("ja-JP"); }
+    function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
+    function escapeAttribute(value) { return escapeHtml(value).replaceAll("`", "&#096;"); }
+    function toggleFavorite(id) { const card = cards.find(item => item.id === id); if (!card) return; card.isFavorite = !card.isFavorite; card.updatedAt = new Date().toISOString(); saveCards(); render(); }
+    function toggleDetails(id) { const card = cards.find(item => item.id === id); if (!card) return; card.isDetailsOpen = !card.isDetailsOpen; saveCards(); render(); }
+    function saveInputCards() { try { const newCards = parseJson(jsonInput.value).filter(isMeaningfulCard); if (!newCards.length) throw new Error("カードの内容を入力してください。"); cards = [...newCards, ...cards.filter(card => card.id !== "sample-001")]; saveCards(); render(); jsonInput.value = ""; localStorage.removeItem(DRAFT_STORAGE_KEY); updateComposer(); setStatus(`${newCards.length}件のカードを保存しました。`, "ok"); } catch (error) { setStatus(error.message, "error"); } }
+    function openEdit(id) { const card = cards.find(item => item.id === id); if (!card) return; editingId = id; Object.entries(editFields).forEach(([key, field]) => { field.value = key === "tags" ? (card.tags || []).join(", ") : (card[key] || ""); }); editDialog.showModal(); }
+    function updateEditingCard() { const existing = cards.find(card => card.id === editingId); if (!existing) return; Object.assign(existing, { title: editFields.title.value.trim() || "無題の違和感", category: editFields.category.value, tags: editFields.tags.value.split(",").map(tag => tag.trim()).filter(Boolean), memo: editFields.memo.value, iwakan: editFields.iwakan.value, surfaceExplanation: editFields.surfaceExplanation.value, hiddenAssumption: editFields.hiddenAssumption.value, realIssue: editFields.realIssue.value, boundary: editFields.boundary.value, nextWatch: editFields.nextWatch.value, updatedAt: new Date().toISOString() }); saveCards(); render(); editDialog.close(); setStatus("カードを更新しました。", "ok"); }
+    function deleteCard(id) { const card = cards.find(item => item.id === id); if (!card || !confirm(`「${card.title}」を削除しますか？`)) return; cards = cards.filter(item => item.id !== id); saveCards(); render(); setStatus("カードを削除しました。", "ok"); }
+    async function copyCardJson(id) { const card = cards.find(item => item.id === id); if (!card) return; await navigator.clipboard.writeText(JSON.stringify(card, null, 2)); setStatus("カードのJSONをコピーしました。", "ok"); }
+    function exportCards() { const blob = new Blob([JSON.stringify(cards.filter(card => card.id !== "sample-001"), null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `iwakan-cards-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(url); }
+    function importCards(file) { if (!file) return; const reader = new FileReader(); reader.onload = () => { try { cards = [...parseCardText(reader.result).map(normalizeCard), ...cards.filter(card => card.id !== "sample-001")]; saveCards(); render(); setStatus("インポートしました。", "ok"); } catch (error) { setStatus(`インポートできませんでした。${error.message}`, "error"); } }; reader.readAsText(file); }
+    function deleteAllCards() { if (!confirm("保存したカードをすべて削除しますか？")) return; cards = []; saveCards(); render(); setStatus("すべて削除しました。", "ok"); }
 
-    function toggleFavorite(id) {
-      const card = cards.find(item => item.id === id);
-      if (!card) return;
-      updateCardState(
-        id,
-        { isFavorite: !card.isFavorite },
-        !card.isFavorite ? "お気に入りに追加しました。" : "お気に入りを解除しました。"
-      );
-    }
-
-    function toggleDetails(id, button) {
-      const card = cards.find(item => item.id === id);
-      const targetCard = button?.closest(".card");
-      const details = targetCard?.querySelector(".card-details");
-      if (!card || !details || !button) return;
-
-      const isOpen = details.classList.contains("hidden");
-      card.isDetailsOpen = isOpen;
-      saveCards();
-
-      details.classList.toggle("hidden", !isOpen);
-      button.setAttribute("aria-expanded", String(isOpen));
-      button.textContent = isOpen ? "閉じる" : "詳しく見る";
-
-      setStatus(isOpen ? "詳しい項目を表示しました。" : "詳しい項目を閉じました。", "ok");
-    }
-
-    function saveInputCards() {
-      try {
-        const newCards = parseJson(jsonInput.value).filter(isMeaningfulCard);
-        if (!newCards.length) throw new Error("カードの内容を入力してください。");
-        cards = cards.filter(card => card.id !== "sample-001");
-        cards = [...newCards, ...cards];
-        saveCards();
-        render();
-        jsonInput.value = "";
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-        updateComposer();
-        setStatus(`${newCards.length}件のカードを保存しました。`, "ok");
-      } catch (error) {
-        setStatus(error.message, "error");
-      }
-    }
-
-    function openEdit(id) {
-      const card = cards.find(item => item.id === id);
-      if (!card) return;
-
-      editingId = id;
-      editFields.title.value = card.title || "";
-      editFields.category.value = card.category || "";
-      editFields.tags.value = (card.tags || []).join(", ");
-      editFields.memo.value = card.memo || "";
-      editFields.iwakan.value = card.iwakan || "";
-      editFields.surfaceExplanation.value = card.surfaceExplanation || "";
-      editFields.hiddenAssumption.value = card.hiddenAssumption || "";
-      editFields.realIssue.value = card.realIssue || "";
-      editFields.boundary.value = card.boundary || "";
-      editFields.nextWatch.value = card.nextWatch || "";
-      setEditStatus("");
-      editDialog.showModal();
-    }
-
-    function updateEditingCard() {
-      const existing = cards.find(card => card.id === editingId);
-      if (!existing) return;
-
-      const updated = {
-        ...existing,
-        title: editFields.title.value.trim() || "無題の違和感",
-        category: editFields.category.value,
-        tags: editFields.tags.value.split(",").map(tag => tag.trim()).filter(Boolean),
-        memo: editFields.memo.value,
-        iwakan: editFields.iwakan.value,
-        surfaceExplanation: editFields.surfaceExplanation.value,
-        hiddenAssumption: editFields.hiddenAssumption.value,
-        realIssue: editFields.realIssue.value,
-        boundary: editFields.boundary.value,
-        nextWatch: editFields.nextWatch.value,
-        image: existing.image,
-        createdAt: existing.createdAt,
-        updatedAt: new Date().toISOString()
-      };
-
-      cards = cards.map(card => card.id === editingId ? updated : card);
-      saveCards();
-      render();
-      setStatus("カードを更新しました。", "ok");
-      editDialog.close();
-    }
-
-    function deleteCard(id) {
-      const card = cards.find(item => item.id === id);
-      if (!card) return;
-
-      if (!confirm(`「${card.title}」を削除しますか？`)) return;
-
-      cards = cards.filter(item => item.id !== id);
-      saveCards();
-      render();
-      setStatus("カードを削除しました。", "ok");
-    }
-
-    async function copyCardJson(id) {
-      const card = cards.find(item => item.id === id);
-      if (!card) return;
-
-      await navigator.clipboard.writeText(JSON.stringify(card, null, 2));
-      setStatus("カードのJSONをコピーしました。", "ok");
-    }
-
-    function exportCards() {
-      const exportData = cards.filter(card => card.id !== "sample-001");
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      const date = new Date().toISOString().slice(0, 10);
-      a.href = url;
-      a.download = `iwakan-cards-${date}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function importCards(file) {
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const imported = parseCardText(reader.result).map(item => normalizeCard(item));
-          cards = cards.filter(card => card.id !== "sample-001");
-          cards = [...imported, ...cards];
-          saveCards();
-          render();
-          setStatus(`${imported.length}件をインポートしました。`, "ok");
-        } catch (error) {
-          setStatus(`インポートできませんでした。${error.message}`, "error");
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function deleteAllCards() {
-      if (!confirm("保存したカードをすべて削除しますか？")) return;
-      cards = [];
-      saveCards();
-      render();
-      setStatus("すべて削除しました。", "ok");
-    }
-
-    saveBtn.addEventListener("click", saveInputCards);
-    clearBtn.addEventListener("click", () => {
-      jsonInput.value = "";
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
-      updateComposer();
-      setStatus("入力欄をクリアしました。", "ok");
-    });
-
-
-    createPromptBtn.addEventListener("click", copyGeneratedPrompt);
-    copyPromptBtn.addEventListener("click", copyGeneratedPrompt);
-
-    loadTemplateBtn.addEventListener("click", () => {
-      jsonInput.value = JSON.stringify(emptyTemplate, null, 2);
-      updateComposer();
-      setStatus("空JSONを入力欄に入れました。", "ok");
-    });
-
-    memoInput.addEventListener("input", () => {
-      updatePromptPreview();
-      updateComposer();
-    });
-    jsonInput.addEventListener("input", updateComposer);
-    searchInput.addEventListener("input", render);
-    categoryFilter.addEventListener("click", event => {
-      const button = event.target.closest("button[data-category]");
-      if (!button) return;
-      selectedCategory = button.dataset.category;
-      render();
-    });
-    cardsEl.addEventListener("scroll", () => {
-      window.requestAnimationFrame(() => {
-        const firstCard = cardsEl.children[0];
-        if (!firstCard) return;
-        const gap = 12;
-        const cardWidth = firstCard.getBoundingClientRect().width + gap;
-        carouselIndex = Math.max(0, Math.min(currentFilteredCount - 1, Math.round(cardsEl.scrollLeft / cardWidth)));
-        updateCarouselPosition();
-      });
-    });
-    prevCardBtn.addEventListener("click", () => scrollCarousel(-1));
-    nextCardBtn.addEventListener("click", () => scrollCarousel(1));
-    favoriteFilterBtn.addEventListener("click", () => {
-      showFavoritesOnly = !showFavoritesOnly;
-      render();
-    });
-    exportBtn.addEventListener("click", exportCards);
-    importInput.addEventListener("change", event => {
-      importCards(event.target.files[0]);
-      event.target.value = "";
-    });
-    deleteAllBtn.addEventListener("click", deleteAllCards);
-    editForm.addEventListener("submit", event => {
-      event.preventDefault();
-      updateEditingCard();
-    });
-    closeDialogBtn.addEventListener("click", () => editDialog.close());
-    editForm.querySelector("[data-close-edit]").addEventListener("click", () => editDialog.close());
-    editDialog.addEventListener("click", event => {
-      if (event.target === editDialog) editDialog.close();
-    });
-
-
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
-          .then(registration => registration.update())
-          .catch(error => {
-            console.error("Service worker registration failed:", error);
-          });
-      });
-    }
-
+    saveBtn.addEventListener("click", saveInputCards); clearBtn.addEventListener("click", () => { jsonInput.value = ""; localStorage.removeItem(DRAFT_STORAGE_KEY); updateComposer(); setStatus("入力欄をクリアしました。", "ok"); }); loadTemplateBtn.addEventListener("click", () => { jsonInput.value = JSON.stringify(emptyTemplate, null, 2); updateComposer(); }); createPromptBtn.addEventListener("click", copyGeneratedPrompt); copyPromptBtn.addEventListener("click", copyGeneratedPrompt); memoInput.addEventListener("input", () => { updatePromptPreview(); updateComposer(); }); jsonInput.addEventListener("input", updateComposer); searchInput.addEventListener("input", render); categoryFilter.addEventListener("click", event => { const button = event.target.closest("button[data-category]"); if (!button) return; selectedCategory = button.dataset.category; render(); }); prevCardBtn.addEventListener("click", () => scrollCarousel(-1)); nextCardBtn.addEventListener("click", () => scrollCarousel(1)); favoriteFilterBtn.addEventListener("click", () => { showFavoritesOnly = !showFavoritesOnly; render(); }); exportBtn.addEventListener("click", exportCards); importInput.addEventListener("change", event => { importCards(event.target.files[0]); event.target.value = ""; }); deleteAllBtn.addEventListener("click", deleteAllCards); editForm.addEventListener("submit", event => { event.preventDefault(); updateEditingCard(); }); closeDialogBtn.addEventListener("click", () => editDialog.close()); editForm.querySelector("[data-close-edit]").addEventListener("click", () => editDialog.close());
+    if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).then(registration => registration.update()).catch(console.error));
     init();
   </script>
 </body>
 </html>
-
