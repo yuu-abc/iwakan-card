@@ -941,11 +941,7 @@
             <h3>① 気になったことをそのまま書く</h3>
             <p class="hint">箇条書き・話し言葉のままでOK</p>
           </div>
-          <textarea id="memoInput" class="memo-input" aria-label="自由メモ入力欄" placeholder="例：会議では改善と言われていたが、…4492 tokens truncated…e("current", item === activeStep));
-    }
-
-    function updatePromptPreview() {
-      const memo = memoInput.value.trim();
+          <textarea id="memoInput" class="memo-input" aria-label="自由メモ入力欄" placeholder="例：会議では改善と言われていたが、…4515 tokens truncated… memo = memoInput.value.trim();
       localStorage.setItem(MEMO_DRAFT_STORAGE_KEY, memoInput.value);
       createPromptBtn.disabled = !memo;
 
@@ -1451,9 +1447,11 @@
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(error => {
-          console.error("Service worker registration failed:", error);
-        });
+        navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+          .then(registration => registration.update())
+          .catch(error => {
+            console.error("Service worker registration failed:", error);
+          });
       });
     }
 
