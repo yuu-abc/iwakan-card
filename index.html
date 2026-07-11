@@ -116,6 +116,44 @@
       color: var(--muted);
     }
 
+
+
+    .usage-guide {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .usage-card {
+      padding: 14px;
+      border: 1px solid rgba(124, 95, 69, 0.18);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .usage-card h3 {
+      margin: 0 0 6px;
+      color: var(--accent-dark);
+      font-size: 15px;
+    }
+
+    .usage-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .usage-note {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #fff7e8;
+      color: #60431f;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
     .steps {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -780,6 +818,7 @@
         gap: 14px;
       }
 
+      .usage-guide,
       .steps {
         grid-template-columns: 1fr;
       }
@@ -927,7 +966,22 @@
       <div class="workflow-intro">
         <p class="eyebrow">保存まで約1分</p>
         <h2 id="workflowTitle">メモをカードにする</h2>
-        <p>まず自由入力の枠に内容を書き、「依頼文を作成してコピー」でChatGPTに渡す依頼文を作成します。</p>
+        <p>「何を入れればいいか分からない」状態から始められるよう、使い方を画面内にまとめました。まずは左下の自由入力欄に、気になった出来事や言葉をそのまま書いてください。</p>
+        <div class="usage-guide" aria-label="違和感カードの使い方">
+          <div class="usage-card">
+            <h3>1. まずはメモを書く</h3>
+            <p>会議・SNS・ニュース・日常会話などで「ん？」と思ったことを、文章の整い具合を気にせず入力します。</p>
+          </div>
+          <div class="usage-card">
+            <h3>2. ChatGPTに整えてもらう</h3>
+            <p>「依頼文を作成してコピー」を押し、ChatGPTへ貼り付けます。返ってきたJSONだけを次の欄に貼ります。</p>
+          </div>
+          <div class="usage-card">
+            <h3>3. カードとして見返す</h3>
+            <p>保存後は検索・カテゴリ・お気に入りで整理できます。必要ならJSONエクスポートでバックアップできます。</p>
+          </div>
+        </div>
+        <p class="usage-note">例：「上司が“自由に意見して”と言ったのに、反対意見だけ流された気がした」など、短い一文でも大丈夫です。</p>
         <div class="steps" aria-label="カードを保存する手順">
           <div id="memoStep" class="step current"><span class="step-number">1</span><span>依頼文を作成</span></div>
           <div id="jsonStep" class="step"><span class="step-number">2</span><span>JSONを貼り付ける</span></div>
@@ -941,7 +995,7 @@
             <h3>① 文章を自由に入力</h3>
             <p class="hint">ChatGPT用の依頼文の元になります</p>
           </div>
-          <textarea id="memoInput" class="memo-input" aria-label="ChatGPTに依頼したい内容の自由入力欄" placeholder="例：会議で感じた違和感、SNSで見た発言、ニュースへの引っかかりなどをそのまま入力してください。"></textarea>
+          <textarea id="memoInput" class="memo-input" aria-label="ChatGPTに依頼したい内容の自由入力欄" placeholder="例：上司が“自由に意見して”と言ったのに、反対意見だけ流された気がした。何が引っかかったのか整理したい。"></textarea>
           <p id="memoFeedback" class="memo-feedback">入力内容をもとに、ChatGPTへ渡す依頼文を作ります。</p>
           <div class="row">
             <button id="createPromptBtn" type="button" disabled>依頼文を作成してコピー</button>
