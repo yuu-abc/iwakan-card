@@ -836,39 +836,27 @@
       }
 
       .cards {
-        display: flex;
-        grid-template-columns: none;
+        grid-template-columns: 1fr;
         gap: 12px;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        scroll-behavior: smooth;
-        -webkit-overflow-scrolling: touch;
-        padding: 2px 0 12px;
       }
 
       .card {
-        flex: 0 0 100%;
-        scroll-snap-align: center;
-        min-height: 60vh;
+        min-width: 0;
         align-content: start;
-      }
-
-      .carousel-nav {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        margin-top: 14px;
-      }
-
-      .carousel-nav button {
-        width: 44px;
-        min-width: 44px;
-        padding: 0;
       }
 
       .category-filter-button {
         width: auto;
+      }
+
+      .card-head,
+      .card-title-row,
+      .meta {
+        min-width: 0;
+      }
+
+      .meta {
+        overflow-wrap: anywhere;
       }
 
       .carousel-position {
@@ -1101,7 +1089,7 @@
     const $ = id => document.getElementById(id);
     const memoInput = $("memoInput"), jsonInput = $("jsonInput"), createPromptBtn = $("createPromptBtn"), copyPromptBtn = $("copyPromptBtn"), promptBox = $("promptBox"), promptHelp = $("promptHelp"), memoFeedback = $("memoFeedback"), composerFeedback = $("composerFeedback"), saveBtn = $("saveBtn"), clearBtn = $("clearBtn"), loadTemplateBtn = $("loadTemplateBtn"), statusEl = $("status"), searchInput = $("searchInput"), categoryFilter = $("categoryFilter"), favoriteFilterBtn = $("favoriteFilterBtn"), exportBtn = $("exportBtn"), importInput = $("importInput"), deleteAllBtn = $("deleteAllBtn"), cardsEl = $("cards"), emptyEl = $("empty"), cardCount = $("cardCount"), prevCardBtn = $("prevCardBtn"), nextCardBtn = $("nextCardBtn"), carouselPosition = $("carouselPosition"), editDialog = $("editDialog"), editForm = $("editForm"), closeDialogBtn = $("closeDialogBtn"), editStatus = $("editStatus");
     const editFields = { title: $("editTitle"), category: $("editCategory"), tags: $("editTags"), memo: $("editMemo"), iwakan: $("editIwakan"), surfaceExplanation: $("editSurface"), hiddenAssumption: $("editHidden"), realIssue: $("editReal"), boundary: $("editBoundary"), nextWatch: $("editNext") };
-    let cards = [], selectedCategory = "", showFavoritesOnly = false, editingId = null, carouselIndex = 0, currentFilteredCount = 0;
+    let cards = [], selectedCategory = "仕事", showFavoritesOnly = false, editingId = null, carouselIndex = 0, currentFilteredCount = 0;
 
     function init() { cards = loadCards(); memoInput.value = localStorage.getItem(MEMO_DRAFT_STORAGE_KEY) || ""; jsonInput.value = localStorage.getItem(DRAFT_STORAGE_KEY) || ""; updatePromptPreview(); updateComposer(); render(); }
     function loadCards() { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); return saved.length ? saved.map(normalizeCard) : [sampleCard]; } catch { return [sampleCard]; } }
